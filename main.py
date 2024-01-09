@@ -1,16 +1,31 @@
-# This is a sample Python script.
+import matplotlib.pyplot as plt
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+# 生成一些示例数据
+x_datas = []
+y_datas = []
+i = 0
+j = 0
+while i<10:
+    i = i+0.0001
+    x_datas.append(i)
+    j = i**2+3
+    y_datas.append(j)
+
+print(x_datas)
+# 使用plot函数绘制连续轨迹
+plt.figure(figsize=(15, 15))
+plt.plot(x_datas, y_datas, label='Trajectory')
+plt.xlim(0, 100)
+plt.ylim(0, 100)
+# 添加标签和标题
+
+plt.xlabel('X-axis')
+plt.ylabel('Y-axis')
+plt.title('Continuous Trajectory Plot')
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+# 添加图例
+plt.legend()
 
-
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+# 显示图形
+plt.show()
