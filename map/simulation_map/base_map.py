@@ -4,7 +4,7 @@ from math import cos,sin,acos,asin
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Wedge
-
+from map.simulation_map.utility import Collision
 
 class base_map():
     def __init__(self,x_xlim,y_ylim,figure_value,explorer):
@@ -37,6 +37,8 @@ class base_map():
 
     def collision(self):
         angles = self.explorer.get_angle(self.explorer.angles)
+        c = Collision(self.explorer.initial_point[0],self.explorer.initial_point[1],self.obstacles[1],self.explorer.radiues[0],angles[0])
+        print(c.get_collision_points())
         #print(cos(angles[0][0]*math.pi/180))
         x1 = self.explorer.initial_point[0]+self.explorer.radiues[0]*cos(angles[0][0]*math.pi/180)
         y1 = self.explorer.initial_point[1]+self.explorer.radiues[0]*sin(angles[0][0]*math.pi/180)
@@ -44,7 +46,7 @@ class base_map():
         x2 = self.explorer.initial_point[0]+self.explorer.radiues[0]*cos(angles[0][1]*math.pi/180)
         y2 = self.explorer.initial_point[1]+self.explorer.radiues[0]*sin(angles[0][1]*math.pi/180)
 
-        #左边
+        ''' #左边
         t = (self.obstacles[1][0][0]-self.explorer.initial_point[0])/self.explorer.radiues[0]
         if t>=-1 and t<=1:
             angle = acos(t)
@@ -91,7 +93,7 @@ class base_map():
             print(angle)
         else:
             print("不相交")
-
+        '''
 
     def show(self):
         if self.x_datas==[]:
