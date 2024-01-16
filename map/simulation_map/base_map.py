@@ -37,63 +37,22 @@ class base_map():
 
     def collision(self):
         angles = self.explorer.get_angle(self.explorer.angles)
-        c = Collision(self.explorer.initial_point[0],self.explorer.initial_point[1],self.obstacles[1],self.explorer.radiues[0],angles[0])
-        print(c.get_collision_points())
-        #print(cos(angles[0][0]*math.pi/180))
-        x1 = self.explorer.initial_point[0]+self.explorer.radiues[0]*cos(angles[0][0]*math.pi/180)
-        y1 = self.explorer.initial_point[1]+self.explorer.radiues[0]*sin(angles[0][0]*math.pi/180)
+        for obstacle in self.obstacles:
+            remove_repeat_obstacle_left_point = False
+            for i in range(len(angles)):
+                c = Collision(self.explorer.initial_point[0], self.explorer.initial_point[1], obstacle,
+                              self.explorer.radiues[i], angles[i]).get_collision_points()
+                #print(c)
+                if len(c) !=0:
+                    remove_repeat_obstacle_left_point = True
+                t = obstacle
+                print(t)
+                #提取每个障碍的所有点，结合到一起按照下，右，上，左进行排列，最后加上最左边的点
+            if remove_repeat_obstacle_left_point:
+                obstacle.arrange_every_side()
 
-        x2 = self.explorer.initial_point[0]+self.explorer.radiues[0]*cos(angles[0][1]*math.pi/180)
-        y2 = self.explorer.initial_point[1]+self.explorer.radiues[0]*sin(angles[0][1]*math.pi/180)
+        print(self.obstacles)
 
-        ''' #左边
-        t = (self.obstacles[1][0][0]-self.explorer.initial_point[0])/self.explorer.radiues[0]
-        if t>=-1 and t<=1:
-            angle = acos(t)
-            #angle = angle*180/math.pi
-            if(angle*180/math.pi>=angles[0][0] and angle*180/math.pi>=angles[0][1]):#先判断该角度是否在已有角度中
-                print("不相交")
-            y = self.explorer.initial_point[1]+self.explorer.radiues[0]*sin(angle)#如果在已有角度中则判断相交点是否在局限内
-            #print(angle*180/math.pi)
-            x = self.obstacles[1][0][0]
-            #todo 还需添加判断两条直线
-            print("y:")
-            print(y)
-            print("x:")
-            print(x)
-            if y>=self.obstacles[1][0][1] and y<=self.obstacles[1][3][1]:
-                print("相交")
-            print(angle)
-        else:
-            print("不相交")
-
-        #下边
-        t = (self.obstacles[1][0][1]-self.explorer.initial_point[1])/self.explorer.radiues[0]
-        if t >= -1 and t <= 1:
-            angle = asin(t)
-            angle = angle*180/math.pi
-            print(angle)
-        else:
-            print("不相交")
-
-        #右边
-        t = (self.obstacles[1][2][0]-self.explorer.initial_point[0])/self.explorer.radiues[0]
-        if t >= -1 and t <= 1:
-            angle = acos(t)
-            angle = angle*180/math.pi
-            print(angle)
-        else:
-            print("不相交")
-
-        #上边
-        t = (self.obstacles[1][2][1]-self.explorer.initial_point[1])/self.explorer.radiues[0]
-        if t >= -1 and t <= 1:
-            angle = asin(t)
-            angle = angle*180/math.pi
-            print(angle)
-        else:
-            print("不相交")
-        '''
 
     def show(self):
         if self.x_datas==[]:
@@ -113,8 +72,16 @@ class base_map():
 
         # 添加黑色多边形
         for obstacle in self.obstacles:
-            polygon_vertices = np.array(obstacle)
+            polygon_vertices = np.array(obstacle.get_obstacle())
             plt.fill(polygon_vertices[:, 0], polygon_vertices[:, 1], color='black', alpha=0.5)#polygon_vertices[:, 0]表示切片所有数组的第一个元素
+
+        #todo 生成形状还是生成线段？？？
+        for obstacle in self.obstacles:
+            obstacle_points = obstacle.show_point()
+            if len(obstacle_points) !=0:
+                polygon_vertices = np.array(obstacle_points)
+                plt.fill(polygon_vertices[:, 0], polygon_vertices[:, 1], color='red', alpha=0.5)#polygon_vertices[:, 0]表示切片所有数组的第一个元素
+
 
         plt.xlim(0, self.xlim)
         plt.ylim(0, self.ylim)
