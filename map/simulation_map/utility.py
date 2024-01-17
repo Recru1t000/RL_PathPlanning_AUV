@@ -25,6 +25,10 @@ class Collision():
         self.r = r
         self.angle1 = angles[0]
         self.angle2 = angles[1]
+        self.left_points = []
+        self.bottom_points = []
+        self.right_points = []
+        self.up_points = []
         self.circle_up_bottom = True  # 因为arccos的y区间为[0,π],所以下半圆的需要360减θ
         if angles[0] >= 180:
             self.circle_up_bottom = False
@@ -44,7 +48,8 @@ class Collision():
 
         if(self.angle1 <= xita <= self.angle2 and self.y1<=y<=self.y2):
             self.collision_points.append((self.x1,y))
-            self.obstacle.add_left_explored((self.x1,y))
+            #self.obstacle.add_left_explored((self.x1,y))
+            self.left_points.append((self.x1,y))
             print("左边相交")
         else:
             print("左边不相交")
@@ -63,7 +68,8 @@ class Collision():
 
         if(self.angle1 <= xita <= self.angle2 and self.y1<=y<=self.y2):
             self.collision_points.append((self.x2,y))
-            self.obstacle.add_right_explored((self.x2,y))
+            #self.obstacle.add_right_explored((self.x2,y))
+            self.right_points.append((self.x2,y))
             print("右边相交")
         else:
             print("右边不相交")
@@ -90,7 +96,8 @@ class Collision():
                 print(math.asin((self.y2 - self.y_init) / self.r)*180/math.pi)
         if(self.angle1 <= xita <= self.angle2 and self.x1<=x<=self.x2):
             self.collision_points.append((x,self.y2))
-            self.obstacle.add_up_explored((x,self.y2))
+            #self.obstacle.add_up_explored((x,self.y2))
+            self.up_points.append((x,self.y2))
             print("上边相交")
         else:
             print("上边不相交")
@@ -117,7 +124,8 @@ class Collision():
                 print(math.asin((self.y1 - self.y_init) / self.r)*180/math.pi)
         if(self.angle1 <= xita <= self.angle2 and self.x1<=x<=self.x2):
             self.collision_points.append((x,self.y1))
-            self.obstacle.add_bottom_explored((x,self.y1))
+            #self.obstacle.add_bottom_explored((x,self.y1))
+            self.bottom_points.append((x,self.y1))
             print("下边相交")
         else:
             print("下边不相交")
@@ -132,10 +140,12 @@ class Collision():
                 # 我们展示出的图形仅需描述障碍的外观，无法探测障碍的内部，也就是说障碍的边与探测器的交汇就行
             if(abs(self.x1-self.x_init)<=self.r and canshu*self.x1>=canshu*self.x_init and self.y1<=self.y_init<=self.y2):
                 self.collision_points.append((self.x1,self.y_init))
-                self.obstacle.add_left_explored((self.x1,self.y_init))
+                #self.obstacle.add_left_explored((self.x1,self.y_init))
+                self.left_points.append((self.x1,self.y_init))
             if(abs(self.x2-self.x_init)<=self.r and canshu*self.x2>=canshu*self.x_init and self.y1<=self.y_init<=self.y2):
                 self.collision_points.append((self.x2,self.y_init))
                 self.obstacle.add_right_explored((self.x2,self.y_init))
+                #self.right_points.append((self.x2,self.y_init))
 
 
         if(angel==45 or angel==225):#如果是45则说明，x和y都大于初始点，如果是225则说明都小于初始点
@@ -150,16 +160,20 @@ class Collision():
             #以下需要判断三点，1.求出来的点是否在半径之内，2.该点是否在矩形的边界之内，3.判断是向45还是向225，如果是45则所有点大于init否则小于init
             if (y_left-self.y_init)**2+(self.x1-self.x_init)**2<=self.r**2 and self.y1<=y_left<=self.y2 and canshu*self.x1>=canshu*self.x_init:#不用小于等于是因为弧线上的节点已经在上面被包含了
                 self.collision_points.append((self.x1, y_left))
-                self.obstacle.add_left_explored((self.x1, y_left))
+                #self.obstacle.add_left_explored((self.x1, y_left))
+                self.left_points.append((self.x1, y_left))
             if (y_right-self.y_init)**2+(self.x2-self.x_init)**2<=self.r**2 and self.y1<=y_right<=self.y2 and canshu*self.x2>=canshu*self.x_init:
                 self.collision_points.append((self.x2, y_right))
-                self.obstacle.add_right_explored((self.x2, y_right))
+                #self.obstacle.add_right_explored((self.x2, y_right))
+                self.right_points.append((self.x2, y_right))
             if (x_bottmo-self.x_init)**2+(self.y1-self.y_init)**2<=self.r**2 and self.x1<=x_bottmo<=self.x2 and canshu*self.y1>=canshu*self.y_init:
                 self.collision_points.append((x_bottmo, self.y1))
-                self.obstacle.add_bottom_explored((x_bottmo, self.y1))
+                #self.obstacle.add_bottom_explored((x_bottmo, self.y1))
+                self.bottom_points.append((x_bottmo, self.y1))
             if (x_up-self.x_init)**2+(self.y2-self.y_init)**2<=self.r**2 and self.x1<=x_up<=self.x2 and canshu*self.y2>=canshu*self.y_init:
                 self.collision_points.append((x_up, self.y2))
-                self.obstacle.add_up_explored((x_up, self.y2))
+                #self.obstacle.add_up_explored((x_up, self.y2))
+                self.up_points.append((x_up, self.y2))
 
         if(angel==90 or angel==270):
             canshu = 1
@@ -167,10 +181,12 @@ class Collision():
                 canshu=-1
             if(self.y1-self.y_init<=self.r and canshu*self.y1>=canshu*self.y_init and self.x1<=self.x_init<=self.x2):
                 self.collision_points.append((self.x_init,self.y1))
-                self.obstacle.add_bottom_explored((self.x_init,self.y1))
+                #self.obstacle.add_bottom_explored((self.x_init,self.y1))
+                self.bottom_points.append((self.x_init,self.y1))
             if(self.y2-self.y_init<=self.r and canshu*self.y2>=canshu*self.y_init and self.x1<=self.x_init<=self.x2):
                 self.collision_points.append((self.x_init,self.y2))
-                self.obstacle.add_up_explored((self.x_init,self.y2))
+                #self.obstacle.add_up_explored((self.x_init,self.y2))
+                self.up_points.append((self.x_init,self.y2))
 
         if(angel==135 or angel==315):#如果是135则说明，x小于初始点,y大于初始点，如果是315则说明,x大于初始点,y小于初始点
             a = self.y_init + self.x_init
@@ -184,16 +200,20 @@ class Collision():
             #以下需要判断三点，1.求出来的点是否在半径之内，2.该点是否在矩形的边界之内，3.判断是向135还是向315
             if (y_left-self.y_init)**2+(self.x1-self.x_init)**2<=self.r**2 and self.y1<=y_left<=self.y2 and canshu*self.x1<=canshu*self.x_init:#不用小于等于是因为弧线上的节点已经在上面被包含了
                 self.collision_points.append((self.x1, y_left))
-                self.obstacle.add_left_explored((self.x1, y_left))
+                #self.obstacle.add_left_explored((self.x1, y_left))
+                self.left_points.append((self.x1, y_left))
             if (y_right-self.y_init)**2+(self.x2-self.x_init)**2<=self.r**2 and self.y1<=y_right<=self.y2 and canshu*self.x2<=canshu*self.x_init:
                 self.collision_points.append((self.x2, y_right))
-                self.obstacle.add_right_explored((self.x2, y_right))
+                #self.obstacle.add_right_explored((self.x2, y_right))
+                self.right_points.append((self.x2, y_right))
             if (x_bottmo-self.x_init)**2+(self.y1-self.y_init)**2<=self.r**2 and self.x1<=x_bottmo<=self.x2 and canshu*self.y1>=canshu*self.y_init:
                 self.collision_points.append((x_bottmo, self.y1))
-                self.obstacle.add_bottom_explored((x_bottmo, self.y1))
+                #self.obstacle.add_bottom_explored((x_bottmo, self.y1))
+                self.bottom_points.append((x_bottmo, self.y1))
             if (x_up-self.x_init)**2+(self.y2-self.y_init)**2<=self.r**2 and self.x1<=x_up<=self.x2 and canshu*self.y2>=canshu*self.y_init:
                 self.collision_points.append((x_up, self.y2))
-                self.obstacle.add_up_explored((x_up, self.y2))
+                #self.obstacle.add_up_explored((x_up, self.y2))
+                self.up_points.append((x_up, self.y2))
     #todo 两条线，和线的终点是否在障碍中
 
     def rectangle_point(self,obstacle):
@@ -225,14 +245,26 @@ class Collision():
             theta_degree = 360-theta_degree
         if r**2<=self.r**2 and self.angle1<=theta_degree<=self.angle2:
             self.collision_points.append((x1,y1))
-            if(x1==self.x1):
-                self.obstacle.add_left_explored((x1,y1))
-            elif x1==self.x2:
-                self.obstacle.add_right_explored((x1,y1))
-            elif y1==self.y1:
-                self.obstacle.add_bottom_explored((x1,y1))
-            elif y1==self.y2:
-                self.obstacle.add_up_explored((x1,y1))
+            if x1==self.x1 and y1 ==self.y1:
+                #self.obstacle.add_left_explored((x1,y1))
+                self.left_points.append((x1,y1))
+                #self.obstacle.add_bottom_explored((x1,y1))
+                self.bottom_points.append((x1,y1))
+            elif x1==self.x1 and y1==self.y2:
+                #self.obstacle.add_left_explored((x1, y1))
+                self.left_points.append((x1,y1))
+                #self.obstacle.add_up_explored((x1, y1))
+                self.up_points.append((x1, y1))
+            elif x1==self.x2 and y1 ==self.y1:
+                #self.obstacle.add_right_explored((x1,y1))
+                self.right_points.append((x1,y1))
+                #self.obstacle.add_bottom_explored((x1, y1))
+                self.bottom_points.append((x1, y1))
+            elif x1==self.x2 and y1 ==self.y2:
+                #self.obstacle.add_right_explored((x1,y1))
+                self.right_points.append((x1,y1))
+                #self.obstacle.add_up_explored((x1, y1))
+                self.up_points.append((x1, y1))
         #print(theta_degree)
 
     def get_collision_points(self):
@@ -245,6 +277,8 @@ class Collision():
         for obstacle in self.obstacle.get_obstacle():
             self.rectangle_point(obstacle)
         self.collision_points = list(set(self.collision_points))
+
+
         if len(self.collision_points)!=0:
             self.collision_points.append(self.collision_points[0])
         else:

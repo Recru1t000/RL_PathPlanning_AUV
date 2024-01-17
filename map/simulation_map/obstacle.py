@@ -35,19 +35,33 @@ class Obstacle():
 
     def add_bottom_explored(self, point):
         self.bottom_explored_points.append(point)
+        for bottom_explored_point in self.bottom_explored_points:
+            bottom_explored_point.sort(key=lambda x: x[0])
+        self.bottom_explored_points.sort(key=lambda x: x[0])
 
     def add_right_explored(self, point):
         self.right_explored_points.append(point)
+        for right_explored_point in self.right_explored_points:
+            right_explored_point.sort(key=lambda x: x[0])
+        self.right_explored_points.sort(key=lambda x: x[0])
 
     def add_up_explored(self, point):
         self.up_explored_points.append(point)
+        for up_explored_point in self.up_explored_points:
+            up_explored_point.sort(key=lambda x: x[0])
+        self.up_explored_points.sort(key=lambda x: x[0])
 
     def add_left_explored(self, point):
         self.left_explored_points.append(point)
+        for left_explored_point in self.left_explored_points:
+            left_explored_point.sort(key=lambda x: x[0])
+        self.left_explored_points.sort(key=lambda x: x[0])
 
     def arrange_every_side(self):
-        self.bottom_explored_points = list(set(self.bottom_explored_points))
-        self.bottom_explored_points.sort(key=lambda x: x[0])
+        # self.bottom_explored_points = list(set(self.bottom_explored_points))
+        for bottom_explored_point in self.bottom_explored_points:
+            bottom_explored_point.sort(key=lambda x: x[0])
+        self.bottom_explored_points.sort(key=lambda x: x[0][0])
 
         self.right_explored_points = list(set(self.right_explored_points))
         self.right_explored_points.sort(key=lambda x: x[1])
@@ -68,4 +82,9 @@ class Obstacle():
             show_points.append(point)
         for point in self.left_explored_points:
             show_points.append(point)
+        return show_points
+
+    def show_line(self):
+        show_points = [self.bottom_explored_points, self.right_explored_points, self.up_explored_points,
+                       self.left_explored_points]
         return show_points
