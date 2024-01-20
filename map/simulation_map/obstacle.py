@@ -33,6 +33,18 @@ class Obstacle():
     def get_obstacle(self):
         return self.obstacle
 
+    def get_bottom_explored_points(self):
+        return self.bottom_explored_points
+
+    def get_right_explored_points(self):
+        return self.right_explored_points
+
+    def get_up_explored_points(self):
+        return self.up_explored_points
+
+    def get_left_explored_points(self):
+        return self.left_explored_points
+
     def add_bottom_explored(self, point):
         self.bottom_explored_points.append(point)
         for bottom_explored_point in self.bottom_explored_points:

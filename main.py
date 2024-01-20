@@ -1,31 +1,19 @@
-import matplotlib.pyplot as plt
+from map.simulation_map.base_map import base_map
+from map.simulation_map.explorer import explorer
+from map.simulation_map.obstacle import Obstacles
 
-# 生成一些示例数据
-x_datas = []
-y_datas = []
-i = 0
-j = 0
-while i<10:
-    i = i+0.0001
-    x_datas.append(i)
-    j = i**2+3
-    y_datas.append(j)
+obstacles = Obstacles()  # 障碍应该按照左下，右下，右上，左上，左下的方式添加
+obstacles.add_obstacles([[(10, 3), (10, 5), (12, 5), (12, 3), (10, 3)]])
+obstacles.add_obstacles([[(30, 35), (60, 35), (60, 60), (30, 60), (30, 35)]])
+obstacles.add_obstacles([[(10, 20), (20, 20), (20, 25), (10, 25), (10, 20)]])
 
-print(x_datas)
-# 使用plot函数绘制连续轨迹
-plt.figure(figsize=(15, 15))
-plt.plot(x_datas, y_datas, label='Trajectory')
-plt.xlim(0, 100)
-plt.ylim(0, 100)
-# 添加标签和标题
+explorers = explorer([1, 2,  4, 5, 6, 7, 8], [30, 25,  23, 25, 32, 12, 24], [40, 30])
 
-plt.xlabel('X-axis')
-plt.ylabel('Y-axis')
-plt.title('Continuous Trajectory Plot')
-
-
-# 添加图例
-plt.legend()
-
-# 显示图形
-plt.show()
+base_map1 = base_map(100, 100, 10)
+base_map1.set_obstacles(obstacles.get_obstacles())
+base_map1.set_explorer(explorers)
+explorers = explorer([2, 4, 6, 7], [10, 2, 11, 13], [10, 20])
+base_map1.set_explorer(explorers)
+base_map1.set_goal_point([[30,20],[20,60],[90,90]])
+#base_map1.collision()
+base_map1.show()

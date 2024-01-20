@@ -16,7 +16,8 @@ class base_map():
         self.obstacles = []
         self.explorer = None
         self.explorered = []#记录已探索的点，以方便画图
-
+        self.starting_point = None
+        self.goal_point = None #数据格式为[[1,0],[2,0],[3,0]]
     def random_datas(self):
         # 生成一些示例数据
         x_datas = []
@@ -65,6 +66,11 @@ class base_map():
         self.explorered.append(explorer)
         self.collision()
 
+    def set_goal_point(self,goal_point):
+        self.goal_point = goal_point
+
+    def get_obstacles(self):
+        return self.obstacles
     def show(self):
         if self.x_datas==[]:
             self.random_datas()
