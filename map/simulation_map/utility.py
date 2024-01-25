@@ -35,7 +35,7 @@ class Collision():
 
     def left_side(self):
         if abs(self.x1-self.x_init)>self.r:
-            print("左边不相交")
+            #print("左边不相交")
             return
         y_chazhi = math.sqrt(self.r**2-(self.x1-self.x_init)**2)#算出y的距离
 
@@ -50,13 +50,13 @@ class Collision():
             self.collision_points.append((self.x1,y))
             #self.obstacle.add_left_explored((self.x1,y))
             self.left_points.append((self.x1,y))
-            print("左边相交")
-        else:
-            print("左边不相交")
+            #print("左边相交")
+        #else:
+            #print("左边不相交")
 
     def right_side(self):
         if abs(self.x2-self.x_init)>self.r:
-            print("右边不相交")
+            #print("右边不相交")
             return
         y_chazhi = math.sqrt(self.r**2-(self.x2-self.x_init)**2)#算出y的距离
         if self.circle_up_bottom:
@@ -70,13 +70,13 @@ class Collision():
             self.collision_points.append((self.x2,y))
             #self.obstacle.add_right_explored((self.x2,y))
             self.right_points.append((self.x2,y))
-            print("右边相交")
-        else:
-            print("右边不相交")
+            #print("右边相交")
+        #else:
+            #print("右边不相交")
 
     def up_side(self):
         if abs(self.y2-self.y_init)>self.r:
-            print("上边不相交")
+            #print("上边不相交")
             return
         x_chazhi = math.sqrt(self.r**2-(self.y2-self.y_init)**2)#算出y的距离
         if self.circle_up_bottom:
@@ -93,18 +93,18 @@ class Collision():
             else:
                 x = self.x_init-x_chazhi
                 xita = 180-math.asin((self.y2 - self.y_init) / self.r)*180/math.pi  # 求出xita的弧度
-                print(math.asin((self.y2 - self.y_init) / self.r)*180/math.pi)
+                #print(math.asin((self.y2 - self.y_init) / self.r)*180/math.pi)
         if(self.angle1 <= xita <= self.angle2 and self.x1<=x<=self.x2):
             self.collision_points.append((x,self.y2))
             #self.obstacle.add_up_explored((x,self.y2))
             self.up_points.append((x,self.y2))
-            print("上边相交")
-        else:
-            print("上边不相交")
+            #print("上边相交")
+        #else:
+            #print("上边不相交")
 
     def bottom_side(self):
         if abs(self.y1-self.y_init)>self.r:
-            print("下边不相交")
+            #print("下边不相交")
             return
         x_chazhi = math.sqrt(self.r**2-(self.y1-self.y_init)**2)#算出y的距离
         if self.circle_up_bottom:
@@ -121,14 +121,14 @@ class Collision():
             else:
                 x = self.x_init-x_chazhi
                 xita = 180-math.asin((self.y1 - self.y_init) / self.r)*180/math.pi  # 求出xita的弧度
-                print(math.asin((self.y1 - self.y_init) / self.r)*180/math.pi)
+                #print(math.asin((self.y1 - self.y_init) / self.r)*180/math.pi)
         if(self.angle1 <= xita <= self.angle2 and self.x1<=x<=self.x2):
             self.collision_points.append((x,self.y1))
             #self.obstacle.add_bottom_explored((x,self.y1))
             self.bottom_points.append((x,self.y1))
-            print("下边相交")
-        else:
-            print("下边不相交")
+            #print("下边相交")
+        #else:
+            #print("下边不相交")
 
     def straight_line(self,angel):
         if(angel==0 or angel==360 or angel==180):
@@ -144,8 +144,8 @@ class Collision():
                 self.left_points.append((self.x1,self.y_init))
             if(abs(self.x2-self.x_init)<=self.r and canshu*self.x2>=canshu*self.x_init and self.y1<=self.y_init<=self.y2):
                 self.collision_points.append((self.x2,self.y_init))
-                self.obstacle.add_right_explored((self.x2,self.y_init))
-                #self.right_points.append((self.x2,self.y_init))
+                #self.obstacle.add_right_explored((self.x2,self.y_init))
+                self.right_points.append((self.x2,self.y_init))
 
 
         if(angel==45 or angel==225):#如果是45则说明，x和y都大于初始点，如果是225则说明都小于初始点
@@ -232,7 +232,7 @@ class Collision():
         OB = B - O
         denominator = np.linalg.norm(OA) * np.linalg.norm(OB)
         if denominator == 0:
-            print("分母为零，夹角无法计算。")
+            #print("分母为零，夹角无法计算。")
             return
 
         # 计算夹角的余弦值
@@ -281,6 +281,6 @@ class Collision():
 
         if len(self.collision_points)!=0:
             self.collision_points.append(self.collision_points[0])
-        else:
-            print("无碰撞点")
+        #else:
+            #print("无碰撞点")
         return self.collision_points

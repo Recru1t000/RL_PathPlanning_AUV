@@ -18,6 +18,7 @@ class base_map():
         self.explorered = []#记录已探索的点，以方便画图
         self.starting_point = None
         self.goal_point = None #数据格式为[[1,0],[2,0],[3,0]]
+        self.init_points = []
     def random_datas(self):
         # 生成一些示例数据
         x_datas = []
@@ -69,6 +70,12 @@ class base_map():
     def set_goal_point(self,goal_point):
         self.goal_point = goal_point
 
+    def get_goal_point(self):
+        return self.goal_point
+
+    def append_init_points(self,point):
+        self.init_points.append(point)
+
     def get_obstacles(self):
         return self.obstacles
     def show(self):
@@ -85,8 +92,10 @@ class base_map():
                 wedge = Wedge((explorer.initial_point[0], explorer.initial_point[1]), radius, first_angle, second_angle, facecolor='blue')
                 ax.add_patch(wedge)
 
+        x_datas = [point[0] for point in self.init_points]
+        y_datas = [point[1] for point in self.init_points]
         # 使用plot函数绘制连续轨迹
-        plt.plot(self.x_datas, self.y_datas, label='Trajectory')
+        plt.plot(x_datas, y_datas, label='Trajectory',color='black')
 
         # 添加黑色多边形
         for obstacle in self.obstacles:
@@ -109,6 +118,10 @@ class base_map():
                         polygon_vertices = np.array(line)
                         plt.fill(polygon_vertices[:, 0], polygon_vertices[:, 1], color='red', alpha=0.5)#polygon_vertices[:, 0]表示切片所有数组的第一个元素
 
+        #添加目标点
+        x_values = [point[0] for point in self.get_goal_point()]
+        y_values = [point[1] for point in self.get_goal_point()]
+        plt.scatter(x_values, y_values, c='red', label='Red Points')
 
         plt.xlim(0, self.xlim)
         plt.ylim(0, self.ylim)
