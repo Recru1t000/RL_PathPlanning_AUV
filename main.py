@@ -1,4 +1,6 @@
+import math
 import time
+from map.simulation_map.utility import Graph
 
 from map.simulation_map.base_map import base_map
 from map.simulation_map.explorer import explorer
@@ -19,11 +21,19 @@ base_map1.set_obstacles(obstacles.get_obstacles())
 #base_map1.set_explorer(explorers)
 base_map1.set_goal_point([[80,70],[20,60],[90,90]])
 #base_map1.collision()
-base_map1.show()
+#base_map1.show()
 
 apf = Artificial_Potential_Field(base_map1)
 for i in range(1000):
-    time.sleep(1)
+    #time.sleep(1)
     a = apf.move()
-    base_map1.show()
+    if(math.sqrt((a[0]-80)**2+(a[1]-70)**2)<=1):
+        break
+    #base_map1.show()
     print(a)
+g = Graph(100,100,5)
+g.generate_graph()
+g.generate_line_reward()
+g.generate_line_reward_by_points(base_map1.get_init_points())
+base_map1.set_line_rewards(g.get_line_rewards())
+base_map1.show()

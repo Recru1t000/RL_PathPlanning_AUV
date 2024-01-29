@@ -19,6 +19,7 @@ class base_map():
         self.starting_point = None
         self.goal_point = None #数据格式为[[1,0],[2,0],[3,0]]
         self.init_points = []
+        self.line_rewards = {}
     def random_datas(self):
         # 生成一些示例数据
         x_datas = []
@@ -37,6 +38,9 @@ class base_map():
 
     def set_obstacles(self,obstacles):
         self.obstacles = obstacles
+
+    def set_line_rewards(self,line_rewards):
+        self.line_rewards = line_rewards
 
     def collision(self):
         angles = self.explorer.get_angle(self.explorer.angles)
@@ -75,6 +79,9 @@ class base_map():
 
     def append_init_points(self,point):
         self.init_points.append(point)
+
+    def get_init_points(self):
+        return self.init_points
 
     def get_obstacles(self):
         return self.obstacles
@@ -118,6 +125,13 @@ class base_map():
                         polygon_vertices = np.array(line)
                         plt.fill(polygon_vertices[:, 0], polygon_vertices[:, 1], color='red', alpha=0.5)#polygon_vertices[:, 0]表示切片所有数组的第一个元素
 
+        for key, value in self.line_rewards.items():
+            polygon_vertices = np.array(key)
+            if value==0:
+                #polygon_vertices = np.array(key)
+                plt.fill(polygon_vertices[:, 0], polygon_vertices[:, 1], color='black', alpha=0.5)
+            elif value==10:
+                plt.fill(polygon_vertices[:, 0], polygon_vertices[:, 1], color='white', alpha=0.5,linewidth=1)
         #添加目标点
         x_values = [point[0] for point in self.get_goal_point()]
         y_values = [point[1] for point in self.get_goal_point()]
