@@ -105,7 +105,7 @@ device = torch.device("cuda") if torch.cuda.is_available() else torch.device(
     "cpu")
 
 env_name = 'CartPole-v1'
-env = gym.make(env_name,render_mode="human")
+env = gym.make(env_name)
 random.seed(0)
 np.random.seed(0)
 if hasattr(env, 'seed'):

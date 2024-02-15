@@ -301,16 +301,16 @@ class Graph():
         self.x_xlim = x_xlim
         self.y_ylim = y_ylim
         self.gridding_range = gridding_range
-        self.array = np.zeros((int(x_xlim / 5), int(y_ylim / 5),2))
+        self.array = np.zeros((int(x_xlim / self.gridding_range), int(y_ylim / self.gridding_range),2))
         self.line_reward = {}
         self.queue = []
 
     def get_line_rewards(self):
         return self.line_reward
     def generate_graph(self):
-        for i in range(int(self.x_xlim / 5)):
-            for j in range(int(self.y_ylim / 5)):
-                self.array[i][j] = np.array([int(i * 5), int(j * 5)])
+        for i in range(int(self.x_xlim / self.gridding_range)):
+            for j in range(int(self.y_ylim / self.gridding_range)):
+                self.array[i][j] = np.array([int(i * self.gridding_range), int(j * self.gridding_range)])
         #print(self.array[0][19])
 
     def generate_line_reward(self):
@@ -321,14 +321,14 @@ class Graph():
                 if(j+1<=len(self.array[0])-1):
                     self.line_reward.update({tuple([tuple(self.array[i][j]),tuple(self.array[i][j+1])]): 0})
         #self.line_reward.update({tuple([0,0]):10})#更改值
-        print(self.line_reward)
+        #print(self.line_reward)
 
     def generate_line_reward_by_points(self,init_points):
-        init_x = int(init_points[0][0]/5)
-        init_y = int(init_points[0][1]/5)
+        init_x = int(init_points[0][0]/self.gridding_range)
+        init_y = int(init_points[0][1]/self.gridding_range)
         for init_point in init_points:
-            x = int(init_point[0]/5)
-            y = int(init_point[1]/5)
+            x = int(init_point[0]/self.gridding_range)
+            y = int(init_point[1]/self.gridding_range)
             if x!=init_x or y!=init_y:
                 if x - init_x==1:
                     self.goto_right_side(x,y,init_x,init_y)
@@ -342,25 +342,25 @@ class Graph():
             init_y = y
         print("down")
     def goto_up_side(self,x,y,init_x,init_y):
-        left_point = [x*5,y*5]
-        right_ponit = [(x+1)*5,y*5]
+        left_point = [x*self.gridding_range,y*self.gridding_range]
+        right_ponit = [(x+1)*self.gridding_range,y*self.gridding_range]
         self.line_reward.update(({tuple([tuple(left_point),tuple(right_ponit)]): 10}))
         self.queue.append([left_point,right_ponit])
 
     def goto_down_side(self,x,y,init_x,init_y):
-        left_point = [x*5,y*5]
-        right_ponit = [(x+1)*5,y*5]
+        left_point = [x*self.gridding_range,y*self.gridding_range]
+        right_ponit = [(x+1)*self.gridding_range,y*self.gridding_range]
         self.line_reward.update(({tuple([tuple(left_point),tuple(right_ponit)]): 10}))
         self.queue.append([left_point,right_ponit])
 
     def goto_left_side(self,x,y,init_x,init_y):
-        left_point = [x*5,y*5]
-        right_ponit = [x*5,(y+1)*5]
+        left_point = [x*self.gridding_range,y*self.gridding_range]
+        right_ponit = [x*self.gridding_range,(y+1)*self.gridding_range]
         self.line_reward.update(({tuple([tuple(left_point),tuple(right_ponit)]): 10}))
         self.queue.append([left_point,right_ponit])
 
     def goto_right_side(self,x,y,init_x,init_y):
-        left_point = [x*5,y*5]
-        right_ponit = [x*5,(y+1)*5]
+        left_point = [x*self.gridding_range,y*self.gridding_range]
+        right_ponit = [x*self.gridding_range,(y+1)*self.gridding_range]
         self.line_reward.update(({tuple([tuple(left_point),tuple(right_ponit)]): 10}))
         self.queue.append([left_point,right_ponit])

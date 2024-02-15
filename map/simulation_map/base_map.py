@@ -41,6 +41,7 @@ class base_map():
 
     def set_line_rewards(self,line_rewards):
         self.line_rewards = line_rewards
+        print(line_rewards)
 
     def collision(self):
         angles = self.explorer.get_angle(self.explorer.angles)

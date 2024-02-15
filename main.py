@@ -35,5 +35,17 @@ g = Graph(100,100,5)
 g.generate_graph()
 g.generate_line_reward()
 g.generate_line_reward_by_points(base_map1.get_init_points())
+
+#输入
+print(base_map1.get_init_points())
+print("剩余电量")
+print("当前距离目标点位置")
+#输出
+print("第n个点")
+#reward
+print("消耗的电量")
+print("探索到探索点的多少")
+print("距离目标点的距离")
+
 base_map1.set_line_rewards(g.get_line_rewards())
 base_map1.show()
