@@ -2,6 +2,8 @@ import math
 
 import numpy as np
 
+from map.simulation_map.explorer import explorer
+
 
 class Collision():
     def __init__(self, x_init, y_init, obstacle, r, angles):
@@ -301,66 +303,149 @@ class Graph():
         self.x_xlim = x_xlim
         self.y_ylim = y_ylim
         self.gridding_range = gridding_range
-        self.array = np.zeros((int(x_xlim / self.gridding_range), int(y_ylim / self.gridding_range),2))
+        self.array = np.zeros((int(x_xlim / self.gridding_range), int(y_ylim / self.gridding_range), 2))
         self.line_reward = {}
         self.queue = []
 
     def get_line_rewards(self):
         return self.line_reward
+
     def generate_graph(self):
         for i in range(int(self.x_xlim / self.gridding_range)):
             for j in range(int(self.y_ylim / self.gridding_range)):
                 self.array[i][j] = np.array([int(i * self.gridding_range), int(j * self.gridding_range)])
-        #print(self.array[0][19])
+        # print(self.array[0][19])
 
     def generate_line_reward(self):
         for i in range(len(self.array)):
             for j in range(len(self.array[0])):
-                if(i+1<=len(self.array)-1):
-                    self.line_reward.update({tuple([tuple(self.array[i][j]),tuple(self.array[i+1][j])]): 0})
-                if(j+1<=len(self.array[0])-1):
-                    self.line_reward.update({tuple([tuple(self.array[i][j]),tuple(self.array[i][j+1])]): 0})
-        #self.line_reward.update({tuple([0,0]):10})#更改值
-        #print(self.line_reward)
+                if (i + 1 <= len(self.array) - 1):
+                    self.line_reward.update({tuple([tuple(self.array[i][j]), tuple(self.array[i + 1][j])]): 0})
+                if (j + 1 <= len(self.array[0]) - 1):
+                    self.line_reward.update({tuple([tuple(self.array[i][j]), tuple(self.array[i][j + 1])]): 0})
+        # self.line_reward.update({tuple([0,0]):10})#更改值
+        # print(self.line_reward)
 
-    def generate_line_reward_by_points(self,init_points):
-        init_x = int(init_points[0][0]/self.gridding_range)
-        init_y = int(init_points[0][1]/self.gridding_range)
+    def generate_line_reward_by_points(self, init_points):
+        init_x = int(init_points[0][0] / self.gridding_range)
+        init_y = int(init_points[0][1] / self.gridding_range)
         for init_point in init_points:
-            x = int(init_point[0]/self.gridding_range)
-            y = int(init_point[1]/self.gridding_range)
-            if x!=init_x or y!=init_y:
-                if x - init_x==1:
-                    self.goto_right_side(x,y,init_x,init_y)
-                if x - init_x==-1:
-                    self.goto_left_side(x,y,init_x,init_y)
-                if y - init_y==1:
-                    self.goto_up_side(x,y,init_x,init_y)
-                if y - init_y==-1:
-                    self.goto_down_side(x,y,init_x,init_y)
+            x = int(init_point[0] / self.gridding_range)
+            y = int(init_point[1] / self.gridding_range)
+            if x != init_x or y != init_y:
+                if x - init_x == 1:
+                    self.goto_right_side(x, y, init_x, init_y)
+                if x - init_x == -1:
+                    self.goto_left_side(x, y, init_x, init_y)
+                if y - init_y == 1:
+                    self.goto_up_side(x, y, init_x, init_y)
+                if y - init_y == -1:
+                    self.goto_down_side(x, y, init_x, init_y)
             init_x = x
             init_y = y
         print("down")
-    def goto_up_side(self,x,y,init_x,init_y):
-        left_point = [x*self.gridding_range,y*self.gridding_range]
-        right_ponit = [(x+1)*self.gridding_range,y*self.gridding_range]
-        self.line_reward.update(({tuple([tuple(left_point),tuple(right_ponit)]): 10}))
-        self.queue.append([left_point,right_ponit])
 
-    def goto_down_side(self,x,y,init_x,init_y):
-        left_point = [x*self.gridding_range,y*self.gridding_range]
-        right_ponit = [(x+1)*self.gridding_range,y*self.gridding_range]
-        self.line_reward.update(({tuple([tuple(left_point),tuple(right_ponit)]): 10}))
-        self.queue.append([left_point,right_ponit])
+    def goto_up_side(self, x, y, init_x, init_y):
+        left_point = [x * self.gridding_range, y * self.gridding_range]
+        right_ponit = [(x + 1) * self.gridding_range, y * self.gridding_range]
+        self.line_reward.update(({tuple([tuple(left_point), tuple(right_ponit)]): 10}))
+        self.queue.append([left_point, right_ponit])
 
-    def goto_left_side(self,x,y,init_x,init_y):
-        left_point = [x*self.gridding_range,y*self.gridding_range]
-        right_ponit = [x*self.gridding_range,(y+1)*self.gridding_range]
-        self.line_reward.update(({tuple([tuple(left_point),tuple(right_ponit)]): 10}))
-        self.queue.append([left_point,right_ponit])
+    def goto_down_side(self, x, y, init_x, init_y):
+        left_point = [x * self.gridding_range, y * self.gridding_range]
+        right_ponit = [(x + 1) * self.gridding_range, y * self.gridding_range]
+        self.line_reward.update(({tuple([tuple(left_point), tuple(right_ponit)]): 10}))
+        self.queue.append([left_point, right_ponit])
 
-    def goto_right_side(self,x,y,init_x,init_y):
-        left_point = [x*self.gridding_range,y*self.gridding_range]
-        right_ponit = [x*self.gridding_range,(y+1)*self.gridding_range]
-        self.line_reward.update(({tuple([tuple(left_point),tuple(right_ponit)]): 10}))
-        self.queue.append([left_point,right_ponit])
+    def goto_left_side(self, x, y, init_x, init_y):
+        left_point = [x * self.gridding_range, y * self.gridding_range]
+        right_ponit = [x * self.gridding_range, (y + 1) * self.gridding_range]
+        self.line_reward.update(({tuple([tuple(left_point), tuple(right_ponit)]): 10}))
+        self.queue.append([left_point, right_ponit])
+
+    def goto_right_side(self, x, y, init_x, init_y):
+        left_point = [x * self.gridding_range, y * self.gridding_range]
+        right_ponit = [x * self.gridding_range, (y + 1) * self.gridding_range]
+        self.line_reward.update(({tuple([tuple(left_point), tuple(right_ponit)]): 10}))
+        self.queue.append([left_point, right_ponit])
+
+
+class Point_collision():
+    def __init__(self, init_point, points, action_point):
+        self.init_point = init_point
+        self.explorer = None
+        self.action_point = action_point
+        self.sequence_points = points#如果为空怎么办
+        self.angle = None
+        self.distance_between_points = None
+
+    def point_angle(self):
+        x1 = self.init_point[0]
+        y1 = self.init_point[1]
+        x2 = self.action_point[0]
+        y2 = self.action_point[1]
+
+        # 计算两个点之间的距离
+        distance_between_points = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        self.distance_between_points = distance_between_points
+
+        # 计算两个点之间的夹角（单位为弧度）
+        angle_in_radians = math.atan2(y2 - y1, x2 - x1)
+
+        # 将夹角转换为角度制
+        angle_in_degrees = angle_in_radians * 180 / math.pi
+        if angle_in_degrees < 0:
+            angle_in_degrees = 360 + angle_in_degrees
+
+        angle = self.judge_angel(angle_in_degrees)  # 判断对应探索器的角度
+        self.angle = angle
+        self.explorer = explorer([angle], distance_between_points, self.init_point)
+
+        return self.explorer
+
+    def other_points(self):
+        x1 = self.init_point[0]
+        y1 = self.init_point[1]
+        other_points_explored = list()
+        for sequence_point in self.sequence_points:
+            x2 = sequence_point[0]
+            y2 = sequence_point[1]
+
+            # 计算两个点之间的距离
+            distance_between_points = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+
+            # 计算两个点之间的夹角（单位为弧度）
+            angle_in_radians = math.atan2(y2 - y1, x2 - x1)
+
+            # 将夹角转换为角度制
+            angle_in_degrees = angle_in_radians * 180 / math.pi
+            if angle_in_degrees < 0:
+                angle_in_degrees = 360 + angle_in_degrees
+
+            angle = self.judge_angel(angle_in_degrees)  # 判断对应探索器的角度
+
+            if self.angle is not None and self.distance_between_points is not None:
+                if angle == self.angle and distance_between_points == self.distance_between_points:
+                    other_points_explored.append(True)
+                else:
+                    other_points_explored.append(False)
+        return other_points_explored
+
+
+    def judge_angel(self, angle):
+        if 135 <= angle < 180:
+            return 1
+        elif 90 <= angle < 135:
+            return 2
+        elif 45 <= angle < 90:
+            return 3
+        elif 0 <= angle < 45:
+            return 4
+        elif 315 <= angle < 360:
+            return 5
+        elif 270 <= angle < 315:
+            return 6
+        elif 225 <= angle < 270:
+            return 7
+        elif 180 <= angle < 225:
+            return 8

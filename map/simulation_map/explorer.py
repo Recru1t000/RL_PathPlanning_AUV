@@ -60,3 +60,6 @@ class explorer():
 
     def get_initial_point(self):
         return self.initial_point
+
+    def get_radiues(self):
+        return self.radiues

@@ -1,6 +1,6 @@
 import math
 from math import cos,sin,acos,asin
-
+from obstacle import *
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Wedge
@@ -11,8 +11,6 @@ class base_map():
         self.xlim = x_xlim#x轴
         self.ylim = y_ylim#y轴
         self.figure_value = figure_value #默认为15
-        self.x_datas = []#x数据点
-        self.y_datas = []#y数据点
         self.obstacles = []
         self.explorer = None
         self.explorered = []#记录已探索的点，以方便画图
@@ -20,24 +18,17 @@ class base_map():
         self.goal_point = None #数据格式为[[1,0],[2,0],[3,0]]
         self.init_points = []
         self.line_rewards = {}
-    def random_datas(self):
-        # 生成一些示例数据
-        x_datas = []
-        y_datas = []
-        i = 0
-        j = 0
-        while i<10:
-            i = i+0.0001
-            self.x_datas.append(i)
-            j = i**2+3
-            self.y_datas.append(j)
 
-    def set_datas(self,x_datas,y_datas):
-        self.x_datas = x_datas
-        self.y_datas = y_datas
 
     def set_obstacles(self,obstacles):
         self.obstacles = obstacles
+
+    def base_map_reset(self):
+        self.obstacles.obstacles_reset()
+        self.init_points = []
+        self.explorer = None
+        self.explorered = []
+
 
     def set_line_rewards(self,line_rewards):
         self.line_rewards = line_rewards
@@ -87,8 +78,7 @@ class base_map():
     def get_obstacles(self):
         return self.obstacles
     def show(self):
-        if self.x_datas==[]:
-            self.random_datas()
+
 
         fig, ax = plt.subplots(figsize=(self.figure_value, self.figure_value))
         for explorer in self.explorered:

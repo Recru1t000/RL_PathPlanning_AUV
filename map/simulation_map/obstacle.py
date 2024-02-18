@@ -17,10 +17,19 @@ class Obstacles():
             if class_obstacle.get_class_obstacle(obstacle):
                 return class_obstacle
 
+    def obstacles_reset(self):
+        for class_obstacle in self.obstacles:
+            class_obstacle.obstacle_reset()
 
 class Obstacle():
     def __init__(self, obstacle):
         self.obstacle = obstacle
+        self.bottom_explored_points = []
+        self.right_explored_points = []
+        self.up_explored_points = []
+        self.left_explored_points = []
+
+    def obstacle_reset(self):
         self.bottom_explored_points = []
         self.right_explored_points = []
         self.up_explored_points = []

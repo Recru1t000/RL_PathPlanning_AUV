@@ -16,6 +16,16 @@ class Artificial_Potential_Field():
         self.initial_point = np.array(self.explorer.get_initial_point())
         # self.goals = [np.array(goal) for goal in base_map.set_goal_point()]
         self.step_size = step_size
+        self.init_points = []
+
+    def set_initial_point(self,initial_point):
+        self.initial_point = initial_point
+
+    def append_init_points(self,initial_point):
+        self.init_points.append(initial_point)
+
+    def get_init_points(self):
+        return self.init_points
 
     def attractive_force(self):
         # 下面的注释是多点的想法
@@ -76,7 +86,7 @@ class Artificial_Potential_Field():
         self.base_map.set_explorer(explorer([1, 2, 3, 4, 5, 6, 7, 8], [5, 5, 5, 5, 5, 5, 5, 5], self.initial_point))
 
     def move(self):
-        self.take_explorer()
+        #self.take_explorer()
         force = self.calculate_total_force()
         new_position = self.initial_point + self.step_size * force / np.linalg.norm(force)
         self.explorer.set_initial_point(new_position)
@@ -84,4 +94,5 @@ class Artificial_Potential_Field():
         if (self.goal[0]-self.initial_point[0])**2+(self.goal[1]-self.initial_point[1])**2 <= self.step_size**2:
             self.initial_point = self.goal
         self.base_map.append_init_points(new_position)
+        self.append_init_points(new_position)
         return new_position
