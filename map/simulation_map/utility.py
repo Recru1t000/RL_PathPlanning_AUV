@@ -399,7 +399,7 @@ class Point_collision():
 
         angle = self.judge_angel(angle_in_degrees)  # 判断对应探索器的角度
         self.angle = angle
-        self.explorer = explorer([angle], distance_between_points, self.init_point)
+        self.explorer = explorer([angle], [distance_between_points], self.init_point)
 
         return self.explorer
 

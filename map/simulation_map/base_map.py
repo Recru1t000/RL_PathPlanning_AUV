@@ -1,6 +1,6 @@
 import math
 from math import cos,sin,acos,asin
-from obstacle import *
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Wedge
@@ -29,6 +29,8 @@ class base_map():
         self.explorer = None
         self.explorered = []
 
+    def init_points_reset(self):
+        self.init_points = []
 
     def set_line_rewards(self,line_rewards):
         self.line_rewards = line_rewards
@@ -36,6 +38,7 @@ class base_map():
 
     def collision(self):
         angles = self.explorer.get_angle(self.explorer.angles)
+        has_collision = False
         for obstacle in self.obstacles:
             remove_repeat_obstacle_left_point = False
             for i in range(len(angles)):
@@ -51,17 +54,20 @@ class base_map():
                         obstacle.add_right_explored(c.right_points)
                     if len(c.up_points) != 0 and len(c.up_points) != 1:
                         obstacle.add_up_explored(c.up_points)
+                    has_collision = True
+        return has_collision
 
                 #提取每个障碍的所有点，结合到一起按照下，右，上，左进行排列，最后加上最左边的点
             #if remove_repeat_obstacle_left_point:
             #    obstacle.arrange_every_side()
 
-        print(self.obstacles)
+
 
     def set_explorer(self,explorer):
         self.explorer = explorer
         self.explorered.append(explorer)
-        self.collision()
+        has_collision = self.collision()
+        return has_collision
 
     def set_goal_point(self,goal_point):
         self.goal_point = goal_point
@@ -77,9 +83,7 @@ class base_map():
 
     def get_obstacles(self):
         return self.obstacles
-    def show(self):
-
-
+    def base_show(self):
         fig, ax = plt.subplots(figsize=(self.figure_value, self.figure_value))
         for explorer in self.explorered:
             angles = explorer.get_angle(explorer.angles)

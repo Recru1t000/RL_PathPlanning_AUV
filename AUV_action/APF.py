@@ -27,6 +27,9 @@ class Artificial_Potential_Field():
     def get_init_points(self):
         return self.init_points
 
+    def get_init_points(self):
+        return self.init_points
+
     def attractive_force(self):
         # 下面的注释是多点的想法
         # 遍历算每个点的步数，确定一个最小步数，然后从这个点确定下个点的步数，直到没有点了。然后计算全部步数.
@@ -93,6 +96,6 @@ class Artificial_Potential_Field():
         self.initial_point = new_position
         if (self.goal[0]-self.initial_point[0])**2+(self.goal[1]-self.initial_point[1])**2 <= self.step_size**2:
             self.initial_point = self.goal
-        self.base_map.append_init_points(new_position)
+        #self.base_map.append_init_points(new_position)
         self.append_init_points(new_position)
         return new_position

@@ -1,5 +1,7 @@
 import math
 import time
+
+from AUV_action.AUV_based import Base_Parameters
 from map.simulation_map.utility import Graph
 
 from map.simulation_map.base_map import base_map
@@ -49,4 +51,6 @@ print("探索到探索点的多少")
 print("距离目标点的距离")
 
 #base_map1.set_line_rewards(g.get_line_rewards())
-base_map1.show()
+base_map1.base_show()
+
+base_parameters = Base_Parameters(1,1,1,1)

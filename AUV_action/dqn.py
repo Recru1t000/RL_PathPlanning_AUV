@@ -1,7 +1,7 @@
 import math
 
 from AUV_action.APF import Artificial_Potential_Field
-from AUV_action.AUV_based import Environment
+from AUV_action.AUV_based import Environment, Base_Parameters
 from map.simulation_map.base_map import base_map
 from map.simulation_map.obstacle import Obstacles
 
@@ -13,7 +13,7 @@ obstacles.add_obstacles([[(10, 20), (20, 20), (20, 25), (10, 25), (10, 20)]])
 base_map1 = base_map(100, 100, 10)
 base_map1.set_obstacles(obstacles.get_obstacles())
 
-base_map1.set_goal_point([[80,70],[20,60],[90,90]])
+base_map1.set_goal_point([[80,70]])
 
 apf = Artificial_Potential_Field(base_map1)
 for i in range(1000):
@@ -33,10 +33,17 @@ def APF_move(init_point,apf,goal_point):
         a = apf.move()
         #print(a)
 
+base_parameters = Base_Parameters(1,1,1,1)
+
 electric = 100
 init_point = [10,10]
 goal_point = [80,70]
 radius = 5
-APF_move(init_point,apf,goal_point)
-env = Environment(electric,init_point,goal_point,radius,apf.get_init_points(),base_map1)
+#APF_move(init_point,apf,goal_point)
+env = Environment(electric,init_point,goal_point,radius,apf.get_init_points(),base_map1,base_parameters)
+rrrrr = env.step(1)
+if rrrrr is False:
+    env.artificial_potential_field()
+env.step(3)
+env.env_show()
 
