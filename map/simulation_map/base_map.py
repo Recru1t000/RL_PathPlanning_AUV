@@ -24,7 +24,9 @@ class base_map():
         self.obstacles = obstacles
 
     def base_map_reset(self):
-        self.obstacles.obstacles_reset()
+        #self.obstacles.obstacles_reset()
+        for class_obstacle in self.obstacles:
+            class_obstacle.obstacle_reset()
         self.init_points = []
         self.explorer = None
         self.explorered = []

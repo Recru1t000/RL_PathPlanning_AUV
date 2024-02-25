@@ -5,7 +5,7 @@ from map.simulation_map.utility import Point_collision
 
 
 class Environment():
-    def __init__(self, electric, init_point, goal_point, radius, init_points, basemap,base_parameters):
+    def __init__(self, electric, init_point, goal_point, radius, init_points, basemap, base_parameters):
         self.electric = electric
         self.init_point = init_point
         self.goal_point = goal_point
@@ -16,6 +16,8 @@ class Environment():
         self.basemap = basemap
         self.base_parameters = base_parameters
 
+    def set_init_points(self, init_points):
+        self.init_points = init_points
 
     def state(self):
         # todo
@@ -26,27 +28,31 @@ class Environment():
         for i in range(self.radius):
             if i < len(self.init_points):
                 state_queue.append(self.init_points_queue[i])
-        state = State(self.electric, self.init_point, self.goal_point,state_queue)
-        state.state_main()
-        new_state = state
+        state = State(self.electric, self.init_point, self.goal_point, state_queue)
+        # state.state_main()
+        new_state = state.state_main()
         return new_state
 
     def reset(self):
         self.origin_environment = Environment(self.electric, self.init_point, self.goal_point, self.radius,
-                                              self.init_points)
+                                              self.init_points,self.basemap,self.base_parameters)
         self.electric = self.origin_environment.get_electric()
         self.init_point = self.origin_environment.get_init_point()
         self.goal_point = self.origin_environment.get_goal_point()
         self.radius = self.origin_environment.get_radius()
+        self.basemap = self.origin_environment.get_basemap()
+        self.base_parameters = self.origin_environment.get_base_parameters()
         self.init_points_queue = list()
         self.basemap.base_map_reset()
+        reset_state = self.state()
+        return reset_state
 
     def step(self, action):
-        if len(self.init_points_queue)==0:
+        if len(self.init_points_queue) == 0:
             self.state()
         sequence_points = list()
         # action返回的是序列里面的第n个点
-        action_point = self.init_points_queue[action]#todo 如果仅剩几个点了怎么办
+        action_point = self.init_points_queue[action]  # todo 如果仅剩几个点了怎么办
         for i in range(action):  # todo 目前无法判断返回的action的数值，此处需要修改，需要将action的点也放进去
             sequence_points.append(self.init_points_queue[i])
         # 然后将这个点前面的点传入进行判断
@@ -54,17 +60,18 @@ class Environment():
         explorer = point_collision.point_angle()
         other_points = point_collision.other_points()  # 返回的为相同的list，内容为True或False
         # todo 判断的点知道了还需要进行reward设置。以及路径点的移动。如果是没探索到的路径点则直接跳过即可。以及将explorer带入basemap判断是否探索到障碍。
-        #判断basemap
+        # 判断basemap
         explore_obstacle = False
         if self.basemap.set_explorer(explorer):
-            self.artificial_potential_field()
+            self.set_init_points(self.artificial_potential_field())
             explore_obstacle = True
             return False
-        #reward
-        reward = self.reward(explorer,self.init_point,sequence_points,other_points,action_point,self.goal_point,explore_obstacle)
+        # reward
+        reward = self.reward(explorer, self.init_point, sequence_points, other_points, action_point, self.goal_point,
+                             explore_obstacle)
 
-        #move
-        move_points = self.AUV_move(action,sequence_points,other_points)
+        # move
+        move_points = self.AUV_move(action, sequence_points, other_points)
         for move_point in move_points:
             self.basemap.append_init_points(move_point)
         i = action
@@ -78,27 +85,29 @@ class Environment():
         done = self.AUV_done()
         truncated = False
 
-        return [next_state,done,truncated]
-    def reward(self,explorer,init_point,sequence_points,other_points,action_point,goal_point,explore_obstacle):
-        r = Reward(self.base_parameters.get_explorer_cost(),self.base_parameters.get_movement_cost(),self.base_parameters.get_distance_cost(),self.base_parameters.get_explore_obstacle_cost())
+        return [next_state, reward, done, truncated]
+
+    def reward(self, explorer, init_point, sequence_points, other_points, action_point, goal_point, explore_obstacle):
+        r = Reward(self.base_parameters.get_explorer_cost(), self.base_parameters.get_movement_cost(),
+                   self.base_parameters.get_distance_cost(), self.base_parameters.get_explore_obstacle_cost())
         r.explore_cost(explorer)
         r.point_reward(other_points)
         if explore_obstacle:
             r.explore_obstacle_cost()
         else:
-            r.move_cost(init_point,sequence_points)
-            r.distance_reward(init_point,action_point,goal_point)
+            r.move_cost(init_point, sequence_points)
+            r.distance_reward(init_point, action_point, goal_point)
         return r.get_reward()
 
-    def AUV_move(self,action,sequence_points,other_points):
+    def AUV_move(self, action, sequence_points, other_points):
         result_points = list()
-        for i in range(action):#此处的action需要判断数值
+        for i in range(action):  # 此处的action需要判断数值
             if other_points[i]:
                 result_points.append(sequence_points[i])
         return result_points
 
     def artificial_potential_field(self):
-        #self.basemap.init_points_reset()
+        # self.basemap.init_points_reset()
         apf = Artificial_Potential_Field(self.basemap)
         apf.set_initial_point(self.init_point)
         for i in range(1000):
@@ -107,11 +116,12 @@ class Environment():
             if (math.sqrt((a[0] - self.goal_point[0]) ** 2 + (a[1] - 70) ** self.goal_point[1]) <= 1):
                 break
             # base_map1.show()
-            #print(a)
+            # print(a)
         return apf.get_init_points()
 
     def AUV_done(self):
-        if (math.sqrt((self.init_point[0] - self.goal_point[0]) ** 2 + (self.init_point[1] - 70) ** self.goal_point[1]) <= 1):
+        if (math.sqrt(
+                (self.init_point[0] - self.goal_point[0]) ** 2 + (self.init_point[1] - 70) ** self.goal_point[1]) <= 1):
             return True
         else:
             return False
@@ -134,7 +144,11 @@ class Environment():
     def get_init_points(self):
         return self.init_points
 
+    def get_basemap(self):
+        return self.basemap
 
+    def get_base_parameters(self):
+        return self.base_parameters
 class State():
     def __init__(self, electric, init_point, goal_point, init_points):
         self.electric = electric
@@ -153,14 +167,30 @@ class State():
     def count_init_points(self):
         return self.init_points
 
+    def get_electric(self):
+        return self.electric
+
+    def get_distance(self):
+        return self.distance
+
+    def get_init_points(self):
+        return self.init_points
+
     def state_main(self):
         self.count_distance()
         self.count_electric()
         self.count_init_points()
+        result = list()
+        result.append(self.get_electric())
+        result.append(self.get_distance())
+        for init_point in self.get_init_points():
+            for i in init_point:
+                result.append(i)
+        return result
 
 
 class Reward():
-    def __init__(self, explorer_cost, movement_cost, distance_cost,explore_obstacle_cost):
+    def __init__(self, explorer_cost, movement_cost, distance_cost, explore_obstacle_cost):
         self.explorer_cost = explorer_cost
         self.movement_cost = movement_cost
         self.distance_cost = distance_cost
@@ -172,7 +202,7 @@ class Reward():
         for i in r:
             self.reward = self.reward + i * self.explorer_cost
 
-    def move_cost(self, init_point,sequence_points):
+    def move_cost(self, init_point, sequence_points):
         for sequence_point in sequence_points:
             distance = math.sqrt((init_point[0] - sequence_point[0]) ** 2 + (init_point[1] - sequence_point[1]) ** 2)
             self.reward = self.reward + distance * self.movement_cost
@@ -203,7 +233,7 @@ class Reward():
 
 
 class Base_Parameters():
-    def __init__(self, explorer_cost, movement_cost, distance_cost,explore_obstacle_cost):
+    def __init__(self, explorer_cost, movement_cost, distance_cost, explore_obstacle_cost):
         self.explorer_cost = explorer_cost
         self.movement_cost = movement_cost
         self.distance_cost = distance_cost

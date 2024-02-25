@@ -1,3 +1,4 @@
+import math
 import random
 import gymnasium as gym
 import numpy as np
@@ -6,6 +7,12 @@ from tqdm import tqdm
 import torch
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
+
+from AUV_action.APF import Artificial_Potential_Field
+from AUV_action.AUV_based import Base_Parameters, Environment
+from map.simulation_map.base_map import base_map
+from map.simulation_map.obstacle import Obstacles
+
 
 class ReplayBuffer:
     ''' 经验回放池 '''
@@ -106,22 +113,47 @@ batch_size = 64
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device(
     "cpu")
 
-env_name = 'CartPole-v1'
+obstacles = Obstacles()  # 障碍应该按照左下，右下，右上，左上，左下的方式添加
+obstacles.add_obstacles([[(10, 3), (10, 5), (12, 5), (12, 3), (10, 3)]])
+obstacles.add_obstacles([[(30, 35), (60, 35), (60, 60), (30, 60), (30, 35)]])
+obstacles.add_obstacles([[(10, 20), (20, 20), (20, 25), (10, 25), (10, 20)]])
+base_map1 = base_map(100, 100, 10)
+base_map1.set_obstacles(obstacles.get_obstacles())
+base_map1.set_goal_point([[80,70]])
+
+apf = Artificial_Potential_Field(base_map1)
+for i in range(1000):
+    #time.sleep(1)
+    a = apf.move()
+    if(math.sqrt((a[0]-80)**2+(a[1]-70)**2)<=1):
+        break
+    #base_map1.show()
+    print(a)
+
+base_parameters = Base_Parameters(1,1,1,1)
+electric = 100
+init_point = [10,10]
+goal_point = [80,70]
+radius = 5
+env = Environment(electric,init_point,goal_point,radius,apf.get_init_points(),base_map1,base_parameters)
+
+
+#env_name = 'CartPole-v1'
 #env = gym.make(env_name,render_mode = 'human')
-env = gym.make(env_name)
+#env = gym.make(env_name)
 random.seed(0)
 np.random.seed(0)
-if hasattr(env, 'seed'):
-    env.seed(0)
-elif hasattr(env.unwrapped, 'seed'):
-    env.unwrapped.seed(0)
+#if hasattr(env, 'seed'):
+#    env.seed(0)
+#elif hasattr(env.unwrapped, 'seed'):
+#    env.unwrapped.seed(0)
 
 torch.manual_seed(0)
 replay_buffer = ReplayBuffer(buffer_size)
-state_dim = env.observation_space.shape[0]#是 NumPy 数组的属性，用于获取数组的第一个维度的大小。
-#state_dim = 12
-action_dim = env.action_space.n
-#action_dim = 2
+#state_dim = env.observation_space.shape[0]#是 NumPy 数组的属性，用于获取数组的第一个维度的大小。
+state_dim = 12
+#action_dim = env.action_space.n
+action_dim = 5
 agent = DQN(state_dim, hidden_dim, action_dim, lr, gamma, epsilon,
             target_update, device)
 
@@ -136,7 +168,7 @@ for i in range(10):
             done = False
             while not done:
                 action = agent.take_action(state)
-                next_state, reward,done,truncated, _ = env.step(action)
+                next_state, reward,done,truncated = env.step(action)
                 if isinstance(state, tuple):
                     state = state[0]
                 replay_buffer.add(state, action, reward, next_state, done)
@@ -162,19 +194,3 @@ for i in range(10):
                     '%.3f' % np.mean(return_list[-10:])
                 })
             pbar.update(1)
-
-'''
-episodes_list = list(range(len(return_list)))
-plt.plot(episodes_list, return_list)
-plt.xlabel('Episodes')
-plt.ylabel('Returns')
-plt.title('DQN on {}'.format(env_name))
-plt.show()
-
-mv_return = rl_utils.moving_average(return_list, 9)
-plt.plot(episodes_list, mv_return)
-plt.xlabel('Episodes')
-plt.ylabel('Returns')
-plt.title('DQN on {}'.format(env_name))
-plt.show()
-'''
