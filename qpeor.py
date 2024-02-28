@@ -1,5 +1,7 @@
 import math
 import random
+import time
+
 #import gymnasium as gym
 import numpy as np
 import collections
@@ -169,6 +171,8 @@ for i in range(10):
             while not done:
                 action = agent.take_action(state)
                 next_state, reward,done,truncated = env.step(action)
+                if done:
+                    break
                 if isinstance(state, tuple):
                     state = state[0]
                 replay_buffer.add(state, action, reward, next_state, done)
@@ -185,7 +189,8 @@ for i in range(10):
                         'dones': b_d
                     }
                     agent.update(transition_dict)
-            base_map1.base_show()
+            #base_map1.base_show()
+            #time.sleep(5)
             print(env.get_electric())
             return_list.append(episode_return)
             if (i_episode + 1) % 10 == 0:

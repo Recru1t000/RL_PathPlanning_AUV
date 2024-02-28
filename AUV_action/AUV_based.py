@@ -16,12 +16,18 @@ class Environment():
         self.origin_environment = None
         self.basemap = basemap
         self.base_parameters = base_parameters
+        self.a = list()
+        for i in init_points:
+            self.a.append(i)
 
     def state(self):
         # todo
         # 有问题需修改
-        for point in self.get_init_points():
-            self.append_init_points_queue(point)
+        #for point in self.get_init_points():
+        #    self.append_init_points_queue(point)
+        for r in range(self.get_radius()):
+            if r < len(self.get_init_points()):
+                self.append_init_points_queue(self.get_init_points()[r])
         state_queue = list()
         for i in range(self.get_radius()):
             if i < len(self.get_init_points()):
@@ -29,6 +35,7 @@ class Environment():
 
         while len(state_queue) < self.get_radius():
             state_queue.append(state_queue[len(state_queue) - 1])
+
         state = State(self.get_electric(), self.get_init_point(), self.get_goal_point(), state_queue)
         # state.state_main()
         new_state = state.state_main()
@@ -47,7 +54,7 @@ class Environment():
         self.set_basemap(self.get_origin_environment().get_basemap())
         self.set_base_parameters(self.get_origin_environment().get_base_parameters())
         self.set_init_points_queue(list())
-        self.set_init_points(self.get_origin_environment().get_init_points())
+        self.set_init_points(copy.deepcopy(self.a))
         self.reset_basemap()
         reset_state = self.state()
         return reset_state
@@ -57,20 +64,28 @@ class Environment():
             self.state()
         sequence_points = list()
         # action返回的是序列里面的第n个点
-        print(action)
-        action_point = self.get_init_points_queue()[action]  # todo 如果仅剩几个点了怎么办
-        for i in range(action):  # todo 目前无法判断返回的action的数值，此处需要修改，需要将action的点也放进去
+        if(action>=len(self.get_init_points_queue())):
+            action_point = self.get_init_points_queue()[len(self.get_init_points_queue())-1]
+            action = len(self.get_init_points_queue())-1
+        else:
+            action_point = self.get_init_points_queue()[action]  # todo 如果仅剩几个点了怎么办
+        for i in range(action+1):  # todo 目前无法判断返回的action的数值，此处需要修改，需要将action的点也放进去
             sequence_points.append(self.get_init_points_queue()[i])
         # 然后将这个点前面的点传入进行判断
         point_collision = Point_collision(self.get_init_point(), sequence_points, action_point)
         explorer = point_collision.point_angle()
+        if explorer.get_radiues()[0]>10:
+            print(self.get_init_point())
+            print(point_collision.action_point)
+            print(sequence_points)
+            print(self.get_init_points_queue())
         self.electric_cost(explorer)
         other_points = point_collision.other_points()  # 返回的为相同的list，内容为True或False
         # todo 判断的点知道了还需要进行reward设置。以及路径点的移动。如果是没探索到的路径点则直接跳过即可。以及将explorer带入basemap判断是否探索到障碍。
         # 判断basemap
         explore_obstacle = False
         if self.set_explorer_basemap(explorer):  # 如果探索到新的障碍点
-            self.set_init_points(self.artificial_potential_field())
+            #self.set_init_points(self.artificial_potential_field())
             explore_obstacle = True
             # return False
 
@@ -86,16 +101,19 @@ class Environment():
             for move_point in move_points:
                 self.append_init_points_basemap(move_point)
             i = action
-            while i == 0:
-                self.pop_init_points_queue()
+            while i >= 0:
+                self.pop_init_points()
                 i -= 1
             self.set_init_point(action_point)
 
-        next_state = self.state()
-
+        self.set_init_points_queue(list())
         done = self.AUV_done()
-        truncated = False
+        if done:
+            next_state = []
+        else:
+            next_state = self.state()
 
+        truncated = False
         return next_state, reward, done, truncated
 
     def reward(self, explorer, init_point, sequence_points, other_points, action_point, goal_point, explore_obstacle):
@@ -131,9 +149,10 @@ class Environment():
         return apf.get_init_points()
 
     def AUV_done(self):
-        if (math.sqrt(
-                (self.get_init_point()[0] - self.goal_point[0]) ** 2 + (self.get_init_point()[1] - 70) **
-                self.goal_point[1]) <= 1):
+        distance = math.sqrt(
+                (self.get_init_point()[0] - self.goal_point[0]) ** 2 + (self.get_init_point()[1] - self.goal_point[1]) **
+                2)
+        if distance <= 1 or len(self.get_init_points())==0:
             return True
         else:
             return False
@@ -162,6 +181,12 @@ class Environment():
 
     def get_init_points(self):
         return self.init_points
+
+    def pop_init_points(self):
+        if len(self.init_points) > 0:
+            self.init_points.pop(0)
+        else:
+            print("init_points_queue小于0,错误存在于pop_init_points_queue")
 
     def set_goal_point(self, goal):
         self.goal_point = goal
