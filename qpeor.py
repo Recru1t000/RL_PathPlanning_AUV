@@ -1,6 +1,6 @@
 import math
 import random
-import gymnasium as gym
+#import gymnasium as gym
 import numpy as np
 import collections
 from tqdm import tqdm
@@ -70,8 +70,8 @@ class DQN:
                 state_array = state
             state = torch.tensor(np.array([state_array]), dtype=torch.float).to(self.device)#这一行将当前状态 state 转换为 PyTorch 张量，并将其移动到设备 self.device 上。这是因为神经网络需要在相同的设备上处理数据。
             #self.q_net(state) 返回一个包含每个动作的 Q 值的张量，argmax() 方法用于找到最大 Q 值的动作索引，然后 .item() 方法将其转换为标量值。
-            act = self.q_net(state)
-            act1 = self.q_net(state).argmax()
+            #act = self.q_net(state)
+            #act1 = self.q_net(state).argmax()
             action = self.q_net(state).argmax().item()#在这里，代理使用 Q 网络对当前状态进行前向传播，以获得每个动作的 Q 值，并选择具有最大 Q 值的动作。
         return action
 
@@ -153,7 +153,7 @@ replay_buffer = ReplayBuffer(buffer_size)
 #state_dim = env.observation_space.shape[0]#是 NumPy 数组的属性，用于获取数组的第一个维度的大小。
 state_dim = 12
 #action_dim = env.action_space.n
-action_dim = 5
+action_dim = radius
 agent = DQN(state_dim, hidden_dim, action_dim, lr, gamma, epsilon,
             target_update, device)
 
@@ -185,6 +185,8 @@ for i in range(10):
                         'dones': b_d
                     }
                     agent.update(transition_dict)
+            base_map1.base_show()
+            print(env.get_electric())
             return_list.append(episode_return)
             if (i_episode + 1) % 10 == 0:
                 pbar.set_postfix({
