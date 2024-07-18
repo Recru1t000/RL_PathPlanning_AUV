@@ -130,7 +130,7 @@ for i in range(1000):
     if(math.sqrt((a[0]-80)**2+(a[1]-70)**2)<=1):
         break
     #base_map1.show()
-    print(a)
+    #print(a)
 
 base_parameters = Base_Parameters(1,1,1,1)
 electric = 100
@@ -190,7 +190,7 @@ for i in range(10):
                     }
                     agent.update(transition_dict)
             #base_map1.base_show()
-            #time.sleep(5)
+            #time.sleep(2)
             print(env.get_electric())
             return_list.append(episode_return)
             if (i_episode + 1) % 10 == 0:

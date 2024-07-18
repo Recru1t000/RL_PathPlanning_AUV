@@ -23,7 +23,7 @@ class Environment():
     def state(self):
         # todo
         # 有问题需修改
-        #for point in self.get_init_points():
+        # for point in self.get_init_points():
         #    self.append_init_points_queue(point)
         for r in range(self.get_radius()):
             if r < len(self.get_init_points()):
@@ -64,28 +64,29 @@ class Environment():
             self.state()
         sequence_points = list()
         # action返回的是序列里面的第n个点
-        if(action>=len(self.get_init_points_queue())):
-            action_point = self.get_init_points_queue()[len(self.get_init_points_queue())-1]
-            action = len(self.get_init_points_queue())-1
+        if (action >= len(self.get_init_points_queue())):
+            action_point = self.get_init_points_queue()[len(self.get_init_points_queue()) - 1]
+            action = len(self.get_init_points_queue()) - 1
         else:
             action_point = self.get_init_points_queue()[action]  # todo 如果仅剩几个点了怎么办
-        for i in range(action+1):  # todo 目前无法判断返回的action的数值，此处需要修改，需要将action的点也放进去
+        for i in range(action + 1):  # todo 目前无法判断返回的action的数值，此处需要修改，需要将action的点也放进去
             sequence_points.append(self.get_init_points_queue()[i])
         # 然后将这个点前面的点传入进行判断
         point_collision = Point_collision(self.get_init_point(), sequence_points, action_point)
         explorer = point_collision.point_angle()
-        if explorer.get_radiues()[0]>10:
+        if explorer.get_radiues()[0] > 5.1:
             print(self.get_init_point())
             print(point_collision.action_point)
             print(sequence_points)
             print(self.get_init_points_queue())
+            print(explorer.get_radiues()[0])
         self.electric_cost(explorer)
         other_points = point_collision.other_points()  # 返回的为相同的list，内容为True或False
         # todo 判断的点知道了还需要进行reward设置。以及路径点的移动。如果是没探索到的路径点则直接跳过即可。以及将explorer带入basemap判断是否探索到障碍。
         # 判断basemap
         explore_obstacle = False
         if self.set_explorer_basemap(explorer):  # 如果探索到新的障碍点
-            #self.set_init_points(self.artificial_potential_field())
+            # self.set_init_points(self.artificial_potential_field())
             explore_obstacle = True
             # return False
 
@@ -118,9 +119,11 @@ class Environment():
 
     def reward(self, explorer, init_point, sequence_points, other_points, action_point, goal_point, explore_obstacle):
         r = Reward(self.get_base_parameters().get_explorer_cost(), self.get_base_parameters().get_movement_cost(),
-                   self.get_base_parameters().get_distance_cost(), self.get_base_parameters().get_explore_obstacle_cost())
+                   self.get_base_parameters().get_distance_cost(),
+                   self.get_base_parameters().get_explore_obstacle_cost())
         r.explore_cost(explorer)
         r.point_reward(other_points)
+        r.electric_reward(self.get_electric())
         if explore_obstacle:
             r.explore_obstacle()
         else:
@@ -150,9 +153,9 @@ class Environment():
 
     def AUV_done(self):
         distance = math.sqrt(
-                (self.get_init_point()[0] - self.goal_point[0]) ** 2 + (self.get_init_point()[1] - self.goal_point[1]) **
-                2)
-        if distance <= 1 or len(self.get_init_points())==0:
+            (self.get_init_point()[0] - self.goal_point[0]) ** 2 + (self.get_init_point()[1] - self.goal_point[1]) **
+            2)
+        if distance <= 1 or len(self.get_init_points()) == 0:
             return True
         else:
             return False
@@ -161,7 +164,9 @@ class Environment():
         self.basemap.base_show()
 
     def electric_cost(self, explorer):
-        electric = self.get_electric() - explorer.get_radiues()[0] * 0.1
+        electric = self.get_electric() - 1
+        if explorer.get_radiues()[0]>self.get_radius():
+            electric = self.get_electric() - explorer.get_radiues()[0] * 0.1
         self.set_electric(electric)
 
     def get_electric(self):
@@ -221,7 +226,7 @@ class Environment():
     def get_origin_environment(self):
         return self.origin_environment
 
-    def set_basemap(self,basemap):
+    def set_basemap(self, basemap):
         self.basemap = basemap
 
     def get_basemap(self):
@@ -230,17 +235,18 @@ class Environment():
     def reset_basemap(self):
         self.basemap.base_map_reset()
 
-    def set_explorer_basemap(self,explorer):
+    def set_explorer_basemap(self, explorer):
         return self.basemap.set_explorer(explorer)
 
-    def append_init_points_basemap(self,move_point):
+    def append_init_points_basemap(self, move_point):
         self.basemap.append_init_points(move_point)
 
-    def set_base_parameters(self,base_parameters):
+    def set_base_parameters(self, base_parameters):
         self.base_parameters = base_parameters
 
     def get_base_parameters(self):
         return self.base_parameters
+
 
 class State():
     def __init__(self, electric, init_point, goal_point, init_points):
@@ -299,6 +305,16 @@ class Reward():
         for sequence_point in sequence_points:
             distance = math.sqrt((init_point[0] - sequence_point[0]) ** 2 + (init_point[1] - sequence_point[1]) ** 2)
             self.reward = self.reward + distance * self.movement_cost
+
+    def electric_reward(self, electric):
+        if electric >= 50:
+            self.reward = self.reward + 0
+        elif 30 <= electric <= 50:
+            self.reward = self.reward - 1
+        elif 10 <= electric <= 30:
+            self.reward = self.reward - 2
+        else:
+            self.reward = self.reward - 3
 
     def point_reward(self, other_points):
         for point in other_points:
