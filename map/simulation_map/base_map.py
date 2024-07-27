@@ -85,7 +85,7 @@ class base_map():
 
     def get_obstacles(self):
         return self.obstacles
-    def base_show(self):
+    def base_show(self,parameter_base_show):
         fig, ax = plt.subplots(figsize=(self.figure_value, self.figure_value))
         for explorer in self.explorered:
             angles = explorer.get_angle(explorer.angles)
@@ -96,8 +96,8 @@ class base_map():
                 wedge = Wedge((explorer.initial_point[0], explorer.initial_point[1]), radius, first_angle, second_angle, facecolor='blue')
                 ax.add_patch(wedge)
 
-        x_datas = [point[0] for point in self.init_points]
-        y_datas = [point[1] for point in self.init_points]
+        x_datas = [point[0] for point in parameter_base_show.get_base_show_path_points()]
+        y_datas = [point[1] for point in parameter_base_show.get_base_show_path_points()]
         # 使用plot函数绘制连续轨迹
         plt.plot(x_datas, y_datas, label='Trajectory',color='black')
 

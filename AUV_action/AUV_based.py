@@ -161,7 +161,8 @@ class Environment():
             return False
 
     def env_show(self):
-        self.basemap.base_show()
+        #self.basemap.base_show()
+        print("改变注释")
 
     def electric_cost(self, explorer):
         electric = self.get_electric() - 1

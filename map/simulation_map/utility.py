@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from matplotlib import pyplot as plt
 
 from map.simulation_map.explorer import explorer
 
@@ -297,79 +298,6 @@ class Collision():
         # print("无碰撞点")
         return self.collision_points
 
-
-class Graph():
-    def __init__(self, x_xlim, y_ylim, gridding_range):
-        self.x_xlim = x_xlim
-        self.y_ylim = y_ylim
-        self.gridding_range = gridding_range
-        self.array = np.zeros((int(x_xlim / self.gridding_range), int(y_ylim / self.gridding_range), 2))
-        self.line_reward = {}
-        self.queue = []
-
-    def get_line_rewards(self):
-        return self.line_reward
-
-    def generate_graph(self):
-        for i in range(int(self.x_xlim / self.gridding_range)):
-            for j in range(int(self.y_ylim / self.gridding_range)):
-                self.array[i][j] = np.array([int(i * self.gridding_range), int(j * self.gridding_range)])
-        # print(self.array[0][19])
-
-    def generate_line_reward(self):
-        for i in range(len(self.array)):
-            for j in range(len(self.array[0])):
-                if (i + 1 <= len(self.array) - 1):
-                    self.line_reward.update({tuple([tuple(self.array[i][j]), tuple(self.array[i + 1][j])]): 0})
-                if (j + 1 <= len(self.array[0]) - 1):
-                    self.line_reward.update({tuple([tuple(self.array[i][j]), tuple(self.array[i][j + 1])]): 0})
-        # self.line_reward.update({tuple([0,0]):10})#更改值
-        # print(self.line_reward)
-
-    def generate_line_reward_by_points(self, init_points):
-        init_x = int(init_points[0][0] / self.gridding_range)
-        init_y = int(init_points[0][1] / self.gridding_range)
-        for init_point in init_points:
-            x = int(init_point[0] / self.gridding_range)
-            y = int(init_point[1] / self.gridding_range)
-            if x != init_x or y != init_y:
-                if x - init_x == 1:
-                    self.goto_right_side(x, y, init_x, init_y)
-                if x - init_x == -1:
-                    self.goto_left_side(x, y, init_x, init_y)
-                if y - init_y == 1:
-                    self.goto_up_side(x, y, init_x, init_y)
-                if y - init_y == -1:
-                    self.goto_down_side(x, y, init_x, init_y)
-            init_x = x
-            init_y = y
-        print("down")
-
-    def goto_up_side(self, x, y, init_x, init_y):
-        left_point = [x * self.gridding_range, y * self.gridding_range]
-        right_ponit = [(x + 1) * self.gridding_range, y * self.gridding_range]
-        self.line_reward.update(({tuple([tuple(left_point), tuple(right_ponit)]): 10}))
-        self.queue.append([left_point, right_ponit])
-
-    def goto_down_side(self, x, y, init_x, init_y):
-        left_point = [x * self.gridding_range, y * self.gridding_range]
-        right_ponit = [(x + 1) * self.gridding_range, y * self.gridding_range]
-        self.line_reward.update(({tuple([tuple(left_point), tuple(right_ponit)]): 10}))
-        self.queue.append([left_point, right_ponit])
-
-    def goto_left_side(self, x, y, init_x, init_y):
-        left_point = [x * self.gridding_range, y * self.gridding_range]
-        right_ponit = [x * self.gridding_range, (y + 1) * self.gridding_range]
-        self.line_reward.update(({tuple([tuple(left_point), tuple(right_ponit)]): 10}))
-        self.queue.append([left_point, right_ponit])
-
-    def goto_right_side(self, x, y, init_x, init_y):
-        left_point = [x * self.gridding_range, y * self.gridding_range]
-        right_ponit = [x * self.gridding_range, (y + 1) * self.gridding_range]
-        self.line_reward.update(({tuple([tuple(left_point), tuple(right_ponit)]): 10}))
-        self.queue.append([left_point, right_ponit])
-
-
 class Point_collision():
     def __init__(self, init_point, points, action_point):
         self.init_point = init_point
@@ -449,3 +377,86 @@ class Point_collision():
             return 7
         elif 180 <= angle < 225:
             return 8
+
+
+class FindIntersections():
+    def find_intersections(self, points, grid_size, cell_size):
+        def line_intersection(p1, p2, q1, q2):
+            def on_segment(p, q, r):
+                if min(p[0], q[0]) <= r[0] <= max(p[0], q[0]) and min(p[1], q[1]) <= r[1] <= max(p[1], q[1]):
+                    return True
+                return False
+
+            def orientation(p, q, r):
+                val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
+                if val == 0:
+                    return 0
+                return 1 if val > 0 else 2
+
+            o1 = orientation(p1, p2, q1)
+            o2 = orientation(p1, p2, q2)
+            o3 = orientation(q1, q2, p1)
+            o4 = orientation(q1, q2, p2)
+
+            if o1 != o2 and o3 != o4:
+                denom = (p2[0] - p1[0]) * (q2[1] - q1[1]) - (p2[1] - p1[1]) * (q2[0] - q1[0])
+                if denom == 0:
+                    return None
+                num1 = (p1[1] - q1[1]) * (q2[0] - q1[0]) - (p1[0] - q1[0]) * (q2[1] - q1[1])
+                num2 = (p1[1] - q1[1]) * (p2[0] - p1[0]) - (p1[0] - q1[0]) * (p2[1] - p1[1])
+                t1 = num1 / denom
+                t2 = num2 / denom
+                if 0 <= t1 <= 1 and 0 <= t2 <= 1:
+                    return (p1[0] + t1 * (p2[0] - p1[0]), p1[1] + t1 * (p2[1] - p1[1]))
+            return None
+
+        intersections = set()  # 使用集合避免重复
+
+        for i in range(len(points) - 1):
+            p1, p2 = points[i], points[i + 1]
+
+            x_min, x_max = min(p1[0], p2[0]), max(p1[0], p2[0])
+            y_min, y_max = min(p1[1], p2[1]), max(p1[1], p2[1])
+
+            for x in range(0, grid_size + 1, cell_size):
+                for y in range(0, grid_size + 1, cell_size):
+                    grid_lines = [
+                        ((x, y), (x + cell_size, y)),
+                        ((x, y), (x, y + cell_size)),
+                        ((x + cell_size, y), (x + cell_size, y + cell_size)),
+                        ((x, y + cell_size), (x + cell_size, y + cell_size))
+                    ]
+
+                    for q1, q2 in grid_lines:
+                        intersection = line_intersection(p1, p2, q1, q2)
+                        if intersection and x_min <= intersection[0] <= x_max and y_min <= intersection[1] <= y_max:
+                            intersections.add(intersection)
+
+        return list(intersections)
+
+    def plot_grid_and_segments(self,points, grid_size, cell_size, intersections):
+        fig, ax = plt.subplots()
+
+        # 绘制网格线段
+        for x in range(0, grid_size + 1, cell_size):
+            ax.plot([x, x], [0, grid_size], color='lightgrey', linestyle='--')
+        for y in range(0, grid_size + 1, cell_size):
+            ax.plot([0, grid_size], [y, y], color='lightgrey', linestyle='--')
+
+        # 绘制线段
+        for i in range(len(points) - 1):
+            p1, p2 = points[i], points[i + 1]
+            ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color='blue')
+
+        # 绘制交点
+        for inter in intersections:
+            ax.plot(inter[0], inter[1], 'ro')  # 交点标记为红色
+
+        ax.set_xlim(0, grid_size)
+        ax.set_ylim(0, grid_size)
+        ax.set_aspect('equal')
+        plt.xlabel('X')
+        plt.ylabel('Y')
+        plt.title('Line Segments and Grid Intersections')
+        plt.grid(True)
+        plt.show()

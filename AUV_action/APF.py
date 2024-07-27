@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 from map.simulation_map.explorer import explorer
@@ -96,3 +98,11 @@ class Artificial_Potential_Field():
         #self.base_map.append_init_points(new_position)
         self.append_init_points(new_position)
         return new_position
+
+    def move_to_goal(self):
+        AUV_point = self.initial_point
+        path = [AUV_point]
+        while math.sqrt((AUV_point[0]-self.goal[0])**2+(AUV_point[1]-self.goal[1])**2)>1:
+            AUV_point = self.move()
+            path.append(AUV_point)
+        return path
