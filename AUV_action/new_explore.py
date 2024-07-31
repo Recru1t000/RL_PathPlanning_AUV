@@ -1,6 +1,40 @@
 import math
+class DQN_Explorer():
+    def __init__(self,radius):
+        self.one = [135, 180]
+        self.two = [90, 135]
+        self.three = [45, 90]
+        self.four = [0, 45]
+        self.five = [315, 360]
+        self.six = [270, 315]
+        self.seven = [225, 270]
+        self.eight = [180, 225]
+        self.radius = radius
 
+    #返回字典数组[[1,radius],[2,radius]]
+    def explore_edge(self, edge, auv_point):
+        s = Sector()
+        edge_point = [[edge.get_point_0_x(),edge.get_point_0_y()],[edge.get_point_1_x(),edge.get_point_1_y()]]
+        result = s.sectors_crossed(auv_point[0], auv_point[1], edge_point)
+        return result
 
+    def old_explorer_to_new(self,name):
+        if name == "one":
+            return 1
+        elif name == "two":
+            return 2
+        elif name == "three":
+            return 3
+        elif name == "four":
+            return 4
+        elif name == "five":
+            return 5
+        elif name == "six":
+            return 6
+        elif name == "seven":
+            return 7
+        elif name == "eight":
+            return 8
 class Sector:
     def __init__(self):
         self.one = [135, 180]
@@ -148,8 +182,5 @@ class Sector:
             return edge[0]
         else:
             return edge[1]
-# 示例用法:
-x0, y0 = 3,3
-edge = [[0, 5], [5, 5]]
-a = Sector()
-print(a.sectors_crossed(x0, y0, edge))
+
+

@@ -148,7 +148,6 @@ class Environment():
             if math.sqrt((a[0] - self.get_goal_point()[0]) ** 2 + (a[1] - 70) ** self.get_goal_point()[1]) <= 1:
                 break
             # base_map1.show()
-            # print(a)
         return apf.get_init_points()
 
     def AUV_done(self):

@@ -9,7 +9,7 @@ from map.simulation_map.base_map import base_map as bmp
 # APF先做一个点来实验，等一个点完成后再做其他的点
 class Artificial_Potential_Field():
     def __init__(self, base_map, att_force=1.0, rep_force=100.0, rep_range=2.0, step_size=1.0):
-        self.explorer = explorer([1, 2, 3, 4, 5, 6, 7, 8], [5, 5, 5, 5, 5, 5, 5, 5], [10, 10])
+        self.explorer = explorer([1, 2, 3, 4, 5, 6, 7, 8], [5, 5, 5, 5, 5, 5, 5, 5], [2, 2])
         self.base_map = base_map
         self.att_force = att_force
         self.rep_force = rep_force
@@ -20,6 +20,9 @@ class Artificial_Potential_Field():
         self.step_size = step_size
         self.init_points = []
 
+    def set_explorer(self,explorer):
+        self.explorer = explorer
+        self.initial_point = np.array(self.explorer.get_initial_point())
     def set_initial_point(self,initial_point):
         self.initial_point = initial_point
 

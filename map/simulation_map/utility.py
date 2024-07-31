@@ -410,7 +410,7 @@ class FindIntersections():
                     return (p1[0] + t1 * (p2[0] - p1[0]), p1[1] + t1 * (p2[1] - p1[1]))
             return None
 
-        intersections = set()  # 使用集合避免重复
+        intersections = list()  # 使用集合避免重复
 
         for i in range(len(points) - 1):
             p1, p2 = points[i], points[i + 1]
@@ -430,7 +430,8 @@ class FindIntersections():
                     for q1, q2 in grid_lines:
                         intersection = line_intersection(p1, p2, q1, q2)
                         if intersection and x_min <= intersection[0] <= x_max and y_min <= intersection[1] <= y_max:
-                            intersections.add(intersection)
+                            if intersection not in intersections:
+                                intersections.append(intersection)
 
         return list(intersections)
 

@@ -20,8 +20,27 @@ class Graph():
 
     def generate_edge_reward(self,path_points):
         self.areas.generate_edge_reward(path_points,self.reward_function)
+    def where_areas_AUV_in(self,AUV_point,next_point):
+        AUV_area = self.areas.where_area_auv_in(AUV_point,next_point)
+        return AUV_area
+    #验证每条边的reward
+    def print_edge_reward(self):
+        all_edges = self.areas.get_all_edges()
+        reward_count = 0
+        for edge in all_edges:
+            reward = edge.get_reward()
+            point0 = [edge.get_point_0_x(),edge.get_point_0_y()]
+            point1 = [edge.get_point_1_x(),edge.get_point_1_y()]
+            print("point0:"+str(point0)+",point1:"+str(point1)+",reward:"+str(reward))
+            if reward!=0:
+                reward_count+=1
+        print(reward_count)
 
+    def get_griding_range(self):
+        return self.griding_range
 
+    def get_areas(self):
+        return self.areas
 # 划分完环境后的区域集合
 class Areas():
     def __init__(self):
@@ -50,8 +69,8 @@ class Areas():
     # 根据边的坐标，将边放入对应的区域中
     # 每次生成该点的上和左的边
     def add_edge_to_area(self, x_xlim, y_ylim, griding_range):
-        for i in range(int(x_xlim / griding_range)):
-            for j in range(int(y_ylim / griding_range)):
+        for i in range(int(x_xlim / griding_range)+1):
+            for j in range(int(y_ylim / griding_range)+1):
                 x = i * griding_range
                 y = j * griding_range
                 #横边
@@ -78,30 +97,24 @@ class Areas():
                     if [edge_up_to_down.get_point_0_x(), edge_up_to_down.get_point_0_y()] == area.get_left_up_point():
                         area.set_left_edge(edge_up_to_down)
                     # 右边
-                    if [edge_left_to_right.get_point_0_x(), edge_left_to_right.get_point_0_y()] == area.get_right_up_point():
+                    if [edge_up_to_down.get_point_0_x(), edge_up_to_down.get_point_0_y()] == area.get_right_up_point():
                         area.set_right_edge(edge_up_to_down)
 
     #此处传入的是数组
     #判断逻辑，如果此时为None，则碰到那个加入那个,如果在边或角上则判断距离终点最近的area
     #如果已有,则选择四个角的坐标距离最贴近auv和下一个到达边的点的最近的距离的区域
-    def where_area_auv_in(self,auv_point,goal_point,next_edge_point):
-
-        if self.area_AUV_in is None:
-            for area in self.area_list:
-                if area.is_point_in(auv_point):
-                    if self.distance<area.distance_to_point(goal_point):
-                        self.set_distance(area.distance_to_point(goal_point))
-                        self.set_area_AUV_in(area)
-        else:
-            distance = 0
-            for area in self.area_list:
-                if area.is_point_in(auv_point):
-                    area_distance = area.distance_to_point(auv_point)+area.distance_to_point(next_edge_point)
-                    if distance == 0:
-                        distance = area_distance
-                    if distance > area_distance:
-                        distance = area_distance
-                        self.set_area_AUV_in(area)
+    def where_area_auv_in(self,auv_point,next_edge_point):
+        distance = 0
+        for area in self.area_list:
+            if area.is_point_in(auv_point):
+                area_distance = area.distance_to_point(auv_point)+area.distance_to_point(next_edge_point)
+                if distance == 0:
+                    distance = area_distance
+                    self.set_area_AUV_in(area)
+                if distance > area_distance:
+                    distance = area_distance
+                    self.set_area_AUV_in(area)
+        return self.area_AUV_in
 
     #path_points为数组
     #先判断第一个点在那个区域里
@@ -122,8 +135,8 @@ class Areas():
                     #高价值
                     reward_function.set_high_edge(present_point,point,edge)
                     #中价值
-                    edge = present_area.which_middle_edge(point)
-                    reward_function.set_middle_edge(present_point, point, edge)
+                    #edge = present_area.which_middle_edge(point)
+                    #reward_function.set_middle_edge(present_point, point, edge)
 
                     break
             present_point = point
@@ -131,6 +144,15 @@ class Areas():
     def print_area_list(self):
         for area in self.area_list:
             area.print_points()
+
+    def get_all_edges(self):
+        edge_list = []
+        for area in self.area_list:
+            area_edges = area.get_area_edges()
+            for edge in area_edges:
+                if edge not in edge_list:
+                    edge_list.append(edge)
+        return edge_list
 
     def areas_reset(self):
         for area in self.area_list:
@@ -142,6 +164,9 @@ class Areas():
 
     def set_distance(self,distance):
         self.distance = distance
+
+    def get_area_AUV_in(self):
+        return self.area_AUV_in
 # 划分完环境后的区域
 class Area():
     def __init__(self):
@@ -188,16 +213,32 @@ class Area():
         self.right_down_point = right_down_point
 
     def get_up_edge(self):
+        if self.up_edge is None:
+            print("up"+str(self.get_left_up_point())+str(self.get_right_up_point())+str(self.get_left_down_point())+str(self.get_right_down_point()))
         return self.up_edge
 
     def get_down_edge(self):
+        if self.down_edge is None:
+            print("down"+str(self.get_left_up_point())+str(self.get_right_up_point())+str(self.get_left_down_point())+str(self.get_right_down_point()))
         return self.down_edge
 
     def get_left_edge(self):
+        if self.left_edge is None:
+            print("left"+str(self.get_left_up_point())+str(self.get_right_up_point())+str(self.get_left_down_point())+str(self.get_right_down_point()))
         return self.left_edge
 
     def get_right_edge(self):
+        if self.right_edge is None:
+            print("right"+str(self.get_left_up_point())+str(self.get_right_up_point())+str(self.get_left_down_point())+str(self.get_right_down_point()))
         return self.right_edge
+
+    def get_area_edges(self):
+        edges = list()
+        edges.append(self.get_up_edge())
+        edges.append(self.get_left_edge())
+        edges.append(self.get_right_edge())
+        edges.append(self.get_down_edge())
+        return edges
 
     def get_left_up_point(self):
         return self.left_up_point
@@ -323,8 +364,9 @@ class Edge():
     def point_in_edge(self,point):
         x = point[0]
         y = point[1]
-        if self.point_0_x<=x<=self.point_1_x and self.point_0_y>=y>=self.point_1_y:
-            return True
+        if self.point_0_x<=x<=self.point_1_x:
+            if self.point_0_y>=y>=self.point_1_y:
+                return True
         else:
             print("self.point_0_x:"+str(self.point_0_x)+",x:"+str(x)+",self.point_1_x:"+str(self.point_1_x))
             print(self.point_0_x<=x<=self.point_1_x)
@@ -337,3 +379,12 @@ class Edge():
         y = point[1]
         distance = (self.point_0_x-x)**2+(self.point_0_y-y)**2+(self.point_1_x-x)**2+(self.point_1_y-y)**2
         return distance
+
+    def auv_in_edge(self,auv_point):
+        if self.point_0_x==self.point_1_x:
+            if self.point_0_x==auv_point[0] and self.point_1_y<=auv_point[1]<=self.point_0_y:
+                return True
+        if self.point_0_y==self.point_1_y:
+            if self.point_0_y==auv_point[1] and self.point_0_x<=auv_point[0]<=self.point_1_x:
+                return True
+        return False
