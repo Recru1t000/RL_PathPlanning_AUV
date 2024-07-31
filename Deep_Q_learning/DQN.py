@@ -36,7 +36,7 @@ class Qnet(torch.nn.Module):
 
     def forward(self, x):
         x = F.relu(self.fc1(x))  # 隐藏层使用ReLU激活函数
-        x = F.relu(self.fcc(x))
+        x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
 
@@ -60,7 +60,7 @@ class DQN:
 
     def take_action(self, state):  # epsilon-贪婪策略采取动作
         if np.random.random() < self.epsilon:
-            action = np.random.randint(self.action_dim)
+            action = np.random.rand(self.action_dim)
         else:
             if isinstance(state,tuple):#判断是否为元组，如果是元组则需要将其中的数组部分带入
                 state_array = state[0]
@@ -68,9 +68,8 @@ class DQN:
                 state_array = state
             state = torch.tensor(np.array([state_array]), dtype=torch.float).to(self.device)#这一行将当前状态 state 转换为 PyTorch 张量，并将其移动到设备 self.device 上。这是因为神经网络需要在相同的设备上处理数据。
             #self.q_net(state) 返回一个包含每个动作的 Q 值的张量，argmax() 方法用于找到最大 Q 值的动作索引，然后 .item() 方法将其转换为标量值。
-            act = self.q_net(state)
-            act1 = self.q_net(state).argmax()
-            action = self.q_net(state).argmax().item()#在这里，代理使用 Q 网络对当前状态进行前向传播，以获得每个动作的 Q 值，并选择具有最大 Q 值的动作。
+            q_values = self.q_net(state)
+            action = torch.sigmoid(q_values).cpu().detach().numpy()
         return action
 
     def update(self, transition_dict):
@@ -99,65 +98,7 @@ class DQN:
                 self.q_net.state_dict())  # #如果达到目标网络更新频率，代理将目标网络的参数更新为当前 Q 网络的参数。这是为了稳定训练和减小目标网络的变化。
         self.count += 1
 
-lr = 2e-3
-num_episodes = 500
-state_dim = 8
-hidden_dim = 64
-action_dim = 4
-gamma = 0.98
-epsilon = 0.01
-target_update = 10
-buffer_size = 10000
-minimal_size = 500
-batch_size = 64
-device = torch.device("cuda") if torch.cuda.is_available() else torch.device(
-    "cpu")
 
-DQN_parameter = DQN_Parameter(state_dim, hidden_dim, action_dim, lr, gamma,
-                 epsilon, target_update, device)
-torch.manual_seed(0)
-replay_buffer = ReplayBuffer(buffer_size)
-
-
-agent = DQN(DQN_parameter)
-
-
-
-return_list = []
-for i in range(10):
-    with tqdm(total=int(num_episodes / 10), desc='Iteration %d' % i) as pbar:
-        for i_episode in range(int(num_episodes / 10)):
-            episode_return = 0
-            state = env.reset()
-            done = False
-            while not done:
-                action = agent.take_action(state)
-                next_state, reward,done,truncated, _ = env.step(action)
-                if isinstance(state, tuple):
-                    state = state[0]
-                replay_buffer.add(state, action, reward, next_state, done)
-                state = next_state
-                episode_return += reward
-                # 当buffer数据的数量超过一定值后,才进行Q网络训练
-                if replay_buffer.size() > minimal_size:
-                    b_s, b_a, b_r, b_ns, b_d = replay_buffer.sample(batch_size)
-                    transition_dict = {
-                        'states': b_s,
-                        'actions': b_a,
-                        'next_states': b_ns,
-                        'rewards': b_r,
-                        'dones': b_d
-                    }
-                    agent.update(transition_dict)
-            return_list.append(episode_return)
-            if (i_episode + 1) % 10 == 0:
-                pbar.set_postfix({
-                    'episode':
-                    '%d' % (num_episodes / 10 * i + i_episode + 1),
-                    'return':
-                    '%.3f' % np.mean(return_list[-10:])
-                })
-            pbar.update(1)
 
 '''
 episodes_list = list(range(len(return_list)))

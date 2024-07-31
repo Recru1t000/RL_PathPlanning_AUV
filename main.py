@@ -1,68 +1,75 @@
-import math
-import time
-
 import numpy as np
+import torch
+from tqdm import tqdm
 
-from AUV_action.AUV_based import Base_Parameters
-from AUV_action.Reward import Reward
+from Deep_Q_learning.DQN import ReplayBuffer, DQN
 from Deep_Q_learning.DQN_environment import DQN_Environment
-from Deep_Q_learning.DQN_parameters import State, Init_Parameters
-from Deep_Q_learning.power_consumption import Power_Consumption
-from map.simulation_map.utility import FindIntersections
-from parameter_type import Parameter_base_show, Parameter_graph
-from map.simulation_map.base_map import base_map
-from map.simulation_map.explorer import explorer
-from map.simulation_map.obstacle import Obstacles
-from map.simulation_map.divide_environment import Graph
-from AUV_action.APF import Artificial_Potential_Field
+from Deep_Q_learning.DQN_parameters import State, Init_Parameters, DQN_Parameter
 
 
 
+lr = 2e-3
+num_episodes = 500
+state_dim = 14
+hidden_dim = 64
+action_dim = 4
+gamma = 0.98
+epsilon = 0.5
+target_update = 10
+buffer_size = 10000
+minimal_size = 500
+batch_size = 64
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device(
+    "cpu")
+
+DQN_parameter = DQN_Parameter(state_dim, hidden_dim, action_dim, lr, gamma,
+                 epsilon, target_update, device)
+torch.manual_seed(0)
+replay_buffer = ReplayBuffer(buffer_size)
 
 
+agent = DQN(DQN_parameter)
 init_parameters = Init_Parameters()
-#环境基本参数
-#在设定基本参数的时候，我们需要确保能够被整除
-
-
-
-#起点的设置在apf的explorer里
-
-
-
-
-
 
 
 
 env = DQN_Environment(init_parameters)
-env.reset()
-t= env.step([0,1,0.9,0])
-print("1")
+#env.reset()
+#next_state,reward,done,truncated,_= env.step([0,1,0.9,0])
 
-#2.执行DQN，确定探索的边
-#3.执行探索
-#4.返回结果，确定是否有障碍，返回reward并消耗能量
-#5.如果有障碍执行第五步，
 
-#第五步，预到障碍
-#1.areas_reset
-'''
-g = Graph(100,100,5)
-g.generate_graph()
-g.generate_line_reward()
-g.generate_line_reward_by_points(base_map1.get_init_points())
-'''
-#输入
-print("剩余电量")
-print("当前距离目标点位置")
-#输出
-print("第n个点")
-#reward
-print("消耗的电量")
-print("探索到探索点的多少")
-print("距离目标点的距离")
-
-#base_map1.set_line_rewards(g.get_line_rewards())
-
-base_parameters = Base_Parameters(1,1,1,1)
+return_list = []
+for i in range(10):
+    with tqdm(total=int(num_episodes / 10), desc='Iteration %d' % i) as pbar:
+        for i_episode in range(int(num_episodes / 10)):
+            episode_return = 0
+            state = env.reset()
+            done = False
+            while not done:
+                action = agent.take_action(state)
+                next_state, reward,done,truncated, _ = env.step(action)
+                if isinstance(state, tuple):
+                    state = state[0]
+                replay_buffer.add(state, action, reward, next_state, done)
+                state = next_state
+                episode_return += reward
+                # 当buffer数据的数量超过一定值后,才进行Q网络训练
+                if replay_buffer.size() > minimal_size:
+                    b_s, b_a, b_r, b_ns, b_d = replay_buffer.sample(batch_size)#todo 此处的数组形式不对
+                    transition_dict = {
+                        'states': b_s,
+                        'actions': b_a,
+                        'next_states': b_ns,
+                        'rewards': b_r,
+                        'dones': b_d
+                    }
+                    agent.update(transition_dict)
+            return_list.append(episode_return)
+            if (i_episode + 1) % 10 == 0:
+                pbar.set_postfix({
+                    'episode':
+                    '%d' % (num_episodes / 10 * i + i_episode + 1),
+                    'return':
+                    '%.3f' % np.mean(return_list[-10:])
+                })
+            pbar.update(1)

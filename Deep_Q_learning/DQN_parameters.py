@@ -2,7 +2,7 @@ import numpy as np
 
 class Init_Parameters():
     def __init__(self):
-        self.init_start_point = [4,4]
+        self.init_start_point = [31,31]
         self.init_target_point = [80,70]
         self.init_power = 200
         self.init_time = 200

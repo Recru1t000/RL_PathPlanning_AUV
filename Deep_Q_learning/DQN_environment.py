@@ -28,12 +28,12 @@ class DQN_Environment():
         self.reward = None
         self.time_consumption = None
 
-    def step(self,action):
 
+    def step(self,action):
         #确定探索的方向和半径
         new_explorer = DQN_Explorer(self.graph.get_griding_range())
         areas = self.graph.get_areas()
-        area = areas.get_area_AUV_in()
+        area = areas.where_area_auv_in(self.state.get_auv_point(),self.state.get_target_point())
         edge_list = self.choose_edge(action,area)
         explore_angles_and_radius = self.get_explore_angles_and_radius(edge_list,new_explorer)
 
@@ -56,10 +56,14 @@ class DQN_Environment():
             old_explorer = explorer([new_explorer.old_explorer_to_new(key)], [value], self.state.get_auv_point())
             if self.basemap.set_explorer(old_explorer):
                 explore_obstacle = True
-
+        #todo 如果没有探索到必要边怎么办
+        has_explored_high_edge = False
+        for edge in edge_list:
+            if edge.get_reward()==2:
+                has_explored_high_edge = True
 
         #可视化
-        self.show_the_path()
+        #self.show_the_path()
         #如果探索到障碍,扣除reward
         if explore_obstacle:
             #重新规划路线
@@ -71,8 +75,10 @@ class DQN_Environment():
             self.graph.generate_edge_reward(path_points)
             self.path_points = path_points
             #扣除reward
-            return self.state.next_state(),self.reward.get_reward(),False,False
+            return self.state.next_state(),self.reward.get_reward(),False,False,False
         #如果没有探索到下一个点的边，扣除reward重新行动。
+        elif not has_explored_high_edge:
+            return self.state.next_state(), self.reward.get_reward(), False, False, False
         else:
             if len(self.path_points)!=0:
                 self.state.set_auv_point(self.path_points.pop(0))
@@ -85,7 +91,7 @@ class DQN_Environment():
                 next_point = self.init_parameters.get_init_target_point()
 
             self.state.set_target_point(next_point)
-            self.show_the_path()
+            #可视化
             # 执行时间消耗
             reduce_time = self.time_consumption.move_time_consumption(self.state.get_auv_point(),next_point)
             self.state.reduce_time(reduce_time)
@@ -94,14 +100,15 @@ class DQN_Environment():
             #判断是否到达终点
             if self.state.get_auv_point()==self.init_parameters.get_init_target_point():
                 done = True
+                #self.show_the_path()
             else:
                 done = False
-            return self.state.next_state(),self.reward.get_reward(),done,False
+            return self.state.next_state(),self.reward.get_reward(),done,False,False
 
     def reset(self):
         obstacles = Obstacles()  # 障碍应该按照左下，右下，右上，左上，左下的方式添加
-        obstacles.add_obstacles([[(10, 3), (10, 5), (12, 5), (12, 3), (10, 3)]])
-        obstacles.add_obstacles([[(30, 35), (60, 35), (60, 60), (30, 60), (30, 35)]])
+        #obstacles.add_obstacles([[(10, 3), (10, 5), (12, 5), (12, 3), (10, 3)]])
+        #obstacles.add_obstacles([[(30, 35), (60, 35), (60, 60), (30, 60), (30, 35)]])
         obstacles.add_obstacles([[(10, 20), (20, 20), (20, 25), (10, 25), (10, 20)]])
         base_map1 = base_map(self.init_parameters.get_x_lim(), self.init_parameters.get_y_lim(), 10)
         base_map1.set_obstacles(obstacles.get_obstacles())
@@ -162,6 +169,8 @@ class DQN_Environment():
         time_consumption.set_explore_time(self.init_parameters.get_explore_time())
         self.time_consumption = time_consumption
 
+        return self.state.next_state()
+
     #action为[0,1,2,3]需要大于0.8的才进行探索，如果全部小于0.8则探索最大的。
     def choose_edge(self,action,area):
         edge_list = []
@@ -196,9 +205,10 @@ class DQN_Environment():
                 #探索到了auv所以在的边
                 dis_1 = math.sqrt((self.state.get_auv_point()[0]-edge.get_point_0_x())**2+(self.state.get_auv_point()[1]-edge.get_point_0_y())**2)
                 dis_2 = math.sqrt((self.state.get_auv_point()[0] - edge.get_point_1_x()) ** 2 + (self.state.get_auv_point()[1] - edge.get_point_1_y()) ** 2)
-                reduce_power = self.power_consumption.has_explored_edge(dis_1+dis_2)
-                self.state.reduce_power(reduce_power)
-                self.reward.get_has_explored_reward(reduce_power)
+                if self.state.get_auv_point()[0]==edge.get_point_0_x() and edge.get_point_0_x()==edge.get_point_1_x():
+                    angles_and_radius_list.append([{'eight':dis_1},{'four': dis_2}])
+                if self.state.get_auv_point()[1] == edge.get_point_0_y() and edge.get_point_0_y() == edge.get_point_1_y():
+                    angles_and_radius_list.append([{'two': dis_1},{'six': dis_2}])
                 continue
             #todo 目前还有一种情况没有考虑到就是如果正好在顶点上怎么办
             angles_and_radius_list.append(explorer.explore_edge(edge,self.state.get_auv_point()))

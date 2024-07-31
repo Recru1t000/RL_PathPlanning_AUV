@@ -368,10 +368,6 @@ class Edge():
             if self.point_0_y>=y>=self.point_1_y:
                 return True
         else:
-            print("self.point_0_x:"+str(self.point_0_x)+",x:"+str(x)+",self.point_1_x:"+str(self.point_1_x))
-            print(self.point_0_x<=x<=self.point_1_x)
-            print("self.point_0_y:" + str(self.point_0_y) + ",y:" + str(y) + ",self.point_1_y:" + str(self.point_1_y))
-            print(self.point_0_y<=y<=self.point_1_y)
             return False
 
     def distance_point_to_edge(self,point):
