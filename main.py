@@ -6,7 +6,15 @@ from Deep_Q_learning.DQN import ReplayBuffer, DQN
 from Deep_Q_learning.DQN_environment import DQN_Environment
 from Deep_Q_learning.DQN_parameters import State, Init_Parameters, DQN_Parameter
 
-
+#设计掩码
+def select_action(action_array):
+    threshold = 0.8
+    mask = np.zeros_like(action_array)
+    if np.any(action_array > threshold):
+        mask[action_array > threshold] = 1
+    else:
+        mask[np.argmax(action_array)] = 1
+    return mask
 
 lr = 2e-3
 num_episodes = 500
@@ -50,12 +58,14 @@ for i in range(10):
                 next_state, reward,done,truncated, _ = env.step(action)
                 if isinstance(state, tuple):
                     state = state[0]
+                action = select_action(action)
                 replay_buffer.add(state, action, reward, next_state, done)
                 state = next_state
                 episode_return += reward
                 # 当buffer数据的数量超过一定值后,才进行Q网络训练
                 if replay_buffer.size() > minimal_size:
                     b_s, b_a, b_r, b_ns, b_d = replay_buffer.sample(batch_size)#todo 此处的数组形式不对
+                    b_a = np.vstack(b_a)  # 将 actions 转换为二维数组形式
                     transition_dict = {
                         'states': b_s,
                         'actions': b_a,

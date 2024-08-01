@@ -1,5 +1,4 @@
 import random
-import gymnasium as gym
 import numpy as np
 import collections
 from tqdm import tqdm
@@ -61,6 +60,8 @@ class DQN:
     def take_action(self, state):  # epsilon-贪婪策略采取动作
         if np.random.random() < self.epsilon:
             action = np.random.rand(self.action_dim)
+            #action = action[0]
+            print("0+::::::" + str(action))
         else:
             if isinstance(state,tuple):#判断是否为元组，如果是元组则需要将其中的数组部分带入
                 state_array = state[0]
@@ -69,13 +70,14 @@ class DQN:
             state = torch.tensor(np.array([state_array]), dtype=torch.float).to(self.device)#这一行将当前状态 state 转换为 PyTorch 张量，并将其移动到设备 self.device 上。这是因为神经网络需要在相同的设备上处理数据。
             #self.q_net(state) 返回一个包含每个动作的 Q 值的张量，argmax() 方法用于找到最大 Q 值的动作索引，然后 .item() 方法将其转换为标量值。
             q_values = self.q_net(state)
-            action = torch.sigmoid(q_values).cpu().detach().numpy()
+            action = torch.sigmoid(q_values).cpu().detach().numpy().flatten()
+            print("1+::::::"+str(action))
         return action
 
     def update(self, transition_dict):
         states = torch.tensor(transition_dict['states'],
                               dtype=torch.float).to(self.device)
-        actions = torch.tensor(transition_dict['actions']).view(-1, 1).to(
+        actions = torch.tensor(transition_dict['actions'],dtype=torch.float).to(
             self.device)# 是 PyTorch 中的操作，用于改变张量的形状。具体来说，.view() 方法用于重新构造张量的维度， -1 表示该维度将根据张量的总元素数自动计算。
         rewards = torch.tensor(transition_dict['rewards'],
                                dtype=torch.float).view(-1, 1).to(self.device)
@@ -84,7 +86,9 @@ class DQN:
         dones = torch.tensor(transition_dict['dones'],
                              dtype=torch.float).view(-1, 1).to(self.device)
 
-        q_values = self.q_net(states).gather(1, actions)  #预测当前状态下采取的动作的 Q 值。gather(1, actions) 用于选择与实际动作匹配的 Q 值。这是为了计算当前 Q 值的估计。
+
+        q_values = self.q_net(states)  #预测当前状态下采取的动作的 Q 值。gather(1, actions) 用于选择与实际动作匹配的 Q 值。这是为了计算当前 Q 值的估计。
+        q_values = torch.sum(q_values * actions, dim=1, keepdim=True)
         # 下个状态的最大Q值
         max_next_q_values = self.target_q_net(next_states).max(1)[0].view(-1, 1)#max(1) 是行维度，返回一个元组，其中包含两个张量：第一个张量是沿指定维度的最大值，第二个张量是对应的索引。max(0)是列维度
         q_targets = rewards + self.gamma * max_next_q_values * (1 - dones)  # TD误差目标
