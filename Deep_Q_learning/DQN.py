@@ -56,12 +56,19 @@ class DQN:
         self.target_update = DQN_parameter.get_target_update()  # 目标网络更新频率
         self.count = 0  # 计数器,记录更新次数
         self.device = DQN_parameter.get_device()
+        self.epsilon_decay = DQN_parameter.get_epsilon_decay()
+        self.epsilon_min = DQN_parameter.get_epsilon_min()
 
-    def take_action(self, state):  # epsilon-贪婪策略采取动作
+    def take_action(self, state,init_parameters):  # epsilon-贪婪策略采取动作
         if np.random.random() < self.epsilon:
-            action = np.random.rand(self.action_dim)
+            action = np.random.randint(self.action_dim)
+            #减小epsilon
+            if self.epsilon > self.epsilon_min:
+                self.epsilon *= self.epsilon_decay
             #action = action[0]
-            print("0+::::::" + str(action))
+            #输出观看
+            st = "0+::::::" + str(action)
+            init_parameters.print_name(st)
         else:
             if isinstance(state,tuple):#判断是否为元组，如果是元组则需要将其中的数组部分带入
                 state_array = state[0]
@@ -69,15 +76,18 @@ class DQN:
                 state_array = state
             state = torch.tensor(np.array([state_array]), dtype=torch.float).to(self.device)#这一行将当前状态 state 转换为 PyTorch 张量，并将其移动到设备 self.device 上。这是因为神经网络需要在相同的设备上处理数据。
             #self.q_net(state) 返回一个包含每个动作的 Q 值的张量，argmax() 方法用于找到最大 Q 值的动作索引，然后 .item() 方法将其转换为标量值。
-            q_values = self.q_net(state)
-            action = torch.sigmoid(q_values).cpu().detach().numpy().flatten()
-            print("1+::::::"+str(action))
+            #q_values = self.q_net(state)
+            #action = torch.sigmoid(q_values).cpu().detach().numpy().flatten()
+            action = self.q_net(state).argmax().item()
+            #输出观看
+            st ="1+::::::"+str(action)
+            init_parameters.print_name(st)
         return action
 
     def update(self, transition_dict):
         states = torch.tensor(transition_dict['states'],
                               dtype=torch.float).to(self.device)
-        actions = torch.tensor(transition_dict['actions'],dtype=torch.float).to(
+        actions = torch.tensor(transition_dict['actions']).view(-1, 1).to(
             self.device)# 是 PyTorch 中的操作，用于改变张量的形状。具体来说，.view() 方法用于重新构造张量的维度， -1 表示该维度将根据张量的总元素数自动计算。
         rewards = torch.tensor(transition_dict['rewards'],
                                dtype=torch.float).view(-1, 1).to(self.device)

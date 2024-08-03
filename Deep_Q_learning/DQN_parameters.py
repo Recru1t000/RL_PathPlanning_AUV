@@ -2,8 +2,8 @@ import numpy as np
 
 class Init_Parameters():
     def __init__(self):
-        self.init_start_point = [31,31]
-        self.init_target_point = [80,70]
+        self.init_start_point = [9,24]
+        self.init_target_point = [81,70]
         self.init_power = 200
         self.init_time = 200
         self.x_xlim = 100
@@ -12,6 +12,8 @@ class Init_Parameters():
         self.power_consumption_value = 8
         self.move_time = 1#每移动1m消耗的时间
         self.explore_time = 1
+        self.print_range = 0
+        self.print_max_range = 3
 
     def get_init_start_point(self):
         return self.init_start_point
@@ -33,9 +35,16 @@ class Init_Parameters():
         return self.move_time
     def get_explore_time(self):
         return self.explore_time
+
+    def print_name(self,name):
+        if self.print_range>=self.print_max_range:
+            print(name)
+
+    def set_print_range(self,num):
+        self.print_range = num
 class DQN_Parameter:
     def __init__(self,state_dim, hidden_dim, action_dim, learning_rate, gamma,
-                 epsilon, target_update, device):
+                 epsilon, target_update, device,epsilon_min,epsilon_decay):
         self.state_dim = state_dim
         self.hidden_dim = hidden_dim
         self.action_dim = action_dim
@@ -44,6 +53,8 @@ class DQN_Parameter:
         self.epsilon = epsilon
         self.target_update = target_update
         self.device = device
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay = epsilon_decay
 
     def get_state_dim(self):
         return self.state_dim
@@ -68,6 +79,12 @@ class DQN_Parameter:
 
     def get_device(self):
         return self.device
+
+    def get_epsilon_decay(self):
+        return self.epsilon_decay
+
+    def get_epsilon_min(self):
+        return self.epsilon_min
 
 class State:
     def __init__(self):

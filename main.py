@@ -1,3 +1,6 @@
+import time
+from datetime import datetime
+
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -16,22 +19,24 @@ def select_action(action_array):
         mask[np.argmax(action_array)] = 1
     return mask
 
-lr = 2e-3
+lr = 0.01
 num_episodes = 500
 state_dim = 14
 hidden_dim = 64
-action_dim = 4
+action_dim = 15
 gamma = 0.98
-epsilon = 0.5
+epsilon = 0.9
 target_update = 10
 buffer_size = 10000
 minimal_size = 500
 batch_size = 64
+epsilon_min = 0.01
+epsilon_decay = 0.999
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device(
     "cpu")
 
 DQN_parameter = DQN_Parameter(state_dim, hidden_dim, action_dim, lr, gamma,
-                 epsilon, target_update, device)
+                 epsilon, target_update, device,epsilon_min,epsilon_decay)
 torch.manual_seed(0)
 replay_buffer = ReplayBuffer(buffer_size)
 
@@ -53,12 +58,16 @@ for i in range(10):
             episode_return = 0
             state = env.reset()
             done = False
+            print(datetime.now())
             while not done:
-                action = agent.take_action(state)
-                next_state, reward,done,truncated, _ = env.step(action)
+                #输出观看
+                init_parameters.set_print_range(i)
+
+                action = agent.take_action(state,init_parameters)
+                next_state, reward,done,truncated, _ = env.step(action+1)
                 if isinstance(state, tuple):
                     state = state[0]
-                action = select_action(action)
+                #action = select_action(action)
                 replay_buffer.add(state, action, reward, next_state, done)
                 state = next_state
                 episode_return += reward
@@ -74,6 +83,7 @@ for i in range(10):
                         'dones': b_d
                     }
                     agent.update(transition_dict)
+            #env.show_the_path()
             return_list.append(episode_return)
             if (i_episode + 1) % 10 == 0:
                 pbar.set_postfix({

@@ -39,7 +39,7 @@ class Reward():
         self.reward = self.reward-reduce_power
 
     def move_to_end_point(self):#todo 可改进
-        self.reward = self.reward+200
+        self.reward = self.reward+400
 
     def get_reward(self):
         return self.reward

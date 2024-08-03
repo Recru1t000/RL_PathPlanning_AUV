@@ -27,6 +27,7 @@ class DQN_Environment():
         self.path_points = None
         self.reward = None
         self.time_consumption = None
+        self.explored_ob = False
 
 
     def step(self,action):
@@ -34,7 +35,8 @@ class DQN_Environment():
         new_explorer = DQN_Explorer(self.graph.get_griding_range())
         areas = self.graph.get_areas()
         area = areas.where_area_auv_in(self.state.get_auv_point(),self.state.get_target_point())
-        edge_list = self.choose_edge(action,area)
+        self.state.set_area(area)
+        edge_list = self.choose_edge_change_action_to_single(action,area)
         explore_angles_and_radius = self.get_explore_angles_and_radius(edge_list,new_explorer)
 
         #执行能量消耗
@@ -52,34 +54,41 @@ class DQN_Environment():
 
         #执行探索
         explore_obstacle = False
-        for key,value in explore_angles_and_radius.items():
-            old_explorer = explorer([new_explorer.old_explorer_to_new(key)], [value], self.state.get_auv_point())
-            if self.basemap.set_explorer(old_explorer):
-                explore_obstacle = True
+        if not self.explored_ob:
+            for key,value in explore_angles_and_radius.items():
+                old_explorer = explorer([new_explorer.old_explorer_to_new(key)], [value], self.state.get_auv_point())
+                if self.basemap.set_explorer(old_explorer):
+                    explore_obstacle = True
+        else:
+            self.explored_ob = False
         #todo 如果没有探索到必要边怎么办
         has_explored_high_edge = False
         for edge in edge_list:
             if edge.get_reward()==2:
+                edge.set_reward(0)
                 has_explored_high_edge = True
-
         #可视化
         #self.show_the_path()
         #如果探索到障碍,扣除reward
-        if explore_obstacle:
+        if explore_obstacle and not self.explored_ob:
             #重新规划路线
             apf = Artificial_Potential_Field(self.basemap)
             apf.set_explorer(explorer([1], [1], self.state.get_auv_point()))
             path = apf.move_to_goal()
             #重新赋予权重
             path_points = FindIntersections().find_intersections(path, self.init_parameters.get_x_lim(),self.init_parameters.get_radius())#不需要插入第一个点，因为当前AUV必然在边上
+            path_points.append((self.init_parameters.get_init_target_point()[0],self.init_parameters.get_init_target_point()[1]))
             self.graph.generate_edge_reward(path_points)
+            path_points.pop(0)
             self.path_points = path_points
+            self.state.set_target_point(path_points[0])
+            self.explored_ob = True
             #扣除reward
             return self.state.next_state(),self.reward.get_reward(),False,False,False
         #如果没有探索到下一个点的边，扣除reward重新行动。
         elif not has_explored_high_edge:
             return self.state.next_state(), self.reward.get_reward(), False, False, False
-        else:
+        elif has_explored_high_edge:
             if len(self.path_points)!=0:
                 self.state.set_auv_point(self.path_points.pop(0))
             else:
@@ -98,18 +107,23 @@ class DQN_Environment():
             #执行时间reward
             self.reward.get_time_consumption_reward(reduce_time)
             #判断是否到达终点
-            if self.state.get_auv_point()==self.init_parameters.get_init_target_point():
+            if self.state.get_auv_point()==(self.init_parameters.get_init_target_point()[0],self.init_parameters.get_init_target_point()[1]):
                 done = True
                 #self.show_the_path()
             else:
                 done = False
+
+            #输出查看位置
+            self.init_parameters.print_name(self.state.get_auv_point())
+            self.init_parameters.print_name(self.state.get_target_point())
+
             return self.state.next_state(),self.reward.get_reward(),done,False,False
 
     def reset(self):
         obstacles = Obstacles()  # 障碍应该按照左下，右下，右上，左上，左下的方式添加
         #obstacles.add_obstacles([[(10, 3), (10, 5), (12, 5), (12, 3), (10, 3)]])
         #obstacles.add_obstacles([[(30, 35), (60, 35), (60, 60), (30, 60), (30, 35)]])
-        obstacles.add_obstacles([[(10, 20), (20, 20), (20, 25), (10, 25), (10, 20)]])
+        obstacles.add_obstacles([[(12, 22), (22, 22), (22, 27), (12, 27), (12, 22)]])
         base_map1 = base_map(self.init_parameters.get_x_lim(), self.init_parameters.get_y_lim(), 10)
         base_map1.set_obstacles(obstacles.get_obstacles())
         base_map1.set_goal_point([self.init_parameters.get_init_target_point()])
@@ -140,11 +154,11 @@ class DQN_Environment():
                                                              self.init_parameters.get_radius())
         # 目前的路径点没有计算auv的初始点，需要加入
         path_points.insert(0, (self.init_parameters.get_init_start_point()[0], self.init_parameters.get_init_start_point()[1]))
-        print(path_points)
+        path_points.append((self.init_parameters.get_init_target_point()[0], self.init_parameters.get_init_target_point()[1]))
+        #print(path_points)
         # 为路径可视化FindIntersections().plot_grid_and_segments(path,x_xlim,radius,path_points)
         # 2.赋予权重(目前未考虑一个角到另一个角的情况)
         graph.generate_edge_reward(path_points)
-
         # 第四步，移动探索
         # 0.判断AUV区域
         AUV_point = path_points.pop(0)
@@ -175,17 +189,18 @@ class DQN_Environment():
     def choose_edge(self,action,area):
         edge_list = []
         array = np.array(action)
-        indices_greater_than_0_8 = np.where(array > 0.8)[0]
-
-        if len(indices_greater_than_0_8) > 0:
-            # 如果存在大于0.8的数值，则输出其索引
-            action_indices = indices_greater_than_0_8
-
-        else:
-            # 如果不存在大于0.8的数值，则找到最大的数值的索引
-            max_index = np.argmax(array)
-            action_indices = [max_index]
-
+        action_indices = list()
+        for i in range(4):
+            if array[i]>0.8:
+                action_indices.append(i)
+        max_value = 0
+        max_index = 0
+        if len(action_indices)==0:
+            for i in range(4):
+                if array[i]>max_value:
+                    max_value = array[i]
+                    max_index = i
+            action_indices.append(max_index)
         # 进行相应的行动
         for ex in action_indices:
             if ex==0:
@@ -198,6 +213,21 @@ class DQN_Environment():
                 edge_list.append(area.get_left_edge())
         return edge_list
 
+    def choose_edge_change_action_to_single(self,action, area):
+        edge_list = []
+        if action-8>=0:
+            edge_list.append(area.get_left_edge())
+            action = action-8
+        if action-4>=0:
+            edge_list.append(area.get_down_edge())
+            action = action-4
+        if action-2>=0:
+            edge_list.append(area.get_right_edge())
+            action = action-2
+        if action-1>=0:
+            edge_list.append(area.get_up_edge())
+            action = action-1
+        return edge_list
     def get_explore_angles_and_radius(self,edge_list,explorer):
         angles_and_radius_list = []
         for edge in edge_list:
