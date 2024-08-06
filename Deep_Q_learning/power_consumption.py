@@ -7,8 +7,15 @@ class Power_Consumption():
     def explorer_power_consumption(self,angle_and_radius):
         reduce_power = 0
         for key,value in angle_and_radius.items():
-            reduce_power = self.power_consumption_value * value/self.radius
+            reduce_power =reduce_power + self.power_consumption_value * value/self.radius
         return reduce_power
+
+    def edge_explorer_power_consumption_full(self,edge_angle_and_radius):
+        for angle_and_radius in edge_angle_and_radius:
+            angle_and_radius[1] = angle_and_radius[1]*self.power_consumption_value/self.radius
+            angle_and_radius[2] = angle_and_radius[2]
+        return edge_angle_and_radius
+
     def set_power_consumption_value(self,power_consumption_value):
         self.power_consumption_value = power_consumption_value
 

@@ -1,19 +1,30 @@
+import math
+
 import numpy as np
 
 class Init_Parameters():
     def __init__(self):
-        self.init_start_point = [9,24]
-        self.init_target_point = [81,70]
-        self.init_power = 200
-        self.init_time = 200
+        self.init_start_point = [41,9]
+        self.init_target_point = [41,80]
         self.x_xlim = 100
         self.y_ylim = 100
         self.radius = 5
+        self.explore_radius = 7.07
         self.power_consumption_value = 8
-        self.move_time = 1#每移动1m消耗的时间
+        #每移动1m消耗的时间
+        self.move_time = 1
+        #每次探索的时间
         self.explore_time = 1
+        #每次启动探索器所需要消耗的固定能量
+        self.start_explored_power = 1
+        #设置的最大能量为1.5倍的全探索的能量乘以一条或者一列的格子数
+        self.init_power = self.power_consumption_value*math.sqrt((self.init_start_point[0]-self.init_target_point[0])**2+(self.init_start_point[1]-self.init_target_point[1])**2)/self.explore_radius*0.5+math.sqrt((self.init_start_point[0]-self.init_target_point[0])**2+(self.init_start_point[1]-self.init_target_point[1])**2)/self.radius*self.start_explored_power
+        #设置初始时间为1.5倍的移动时间乘以起点到终点的距离
+        self.init_time = 1.5*self.move_time*math.sqrt((self.init_start_point[0]-self.init_target_point[0])**2+(self.init_start_point[1]-self.init_target_point[1])**2)
+
+
         self.print_range = 0
-        self.print_max_range = 3
+        self.print_max_range = 10
 
     def get_init_start_point(self):
         return self.init_start_point
@@ -29,6 +40,8 @@ class Init_Parameters():
         return self.y_ylim
     def get_radius(self):
         return self.radius
+    def get_explore_radius(self):
+        return self.explore_radius
     def get_power_consumption_value(self):
         return self.power_consumption_value
     def get_move_time(self):
@@ -42,9 +55,18 @@ class Init_Parameters():
 
     def set_print_range(self,num):
         self.print_range = num
+
+    def get_start_explored_power(self):
+        return self.start_explored_power
+
+    def set_init_start_point(self,init_start_point):
+        self.init_start_point = init_start_point
+
+    def set_init_target_point(self,init_target_point):
+        self.init_target_point = init_target_point
 class DQN_Parameter:
     def __init__(self,state_dim, hidden_dim, action_dim, learning_rate, gamma,
-                 epsilon, target_update, device,epsilon_min,epsilon_decay):
+                 epsilon, target_update, device,epsilon_min,epsilon_decay,capacity):
         self.state_dim = state_dim
         self.hidden_dim = hidden_dim
         self.action_dim = action_dim
@@ -55,6 +77,7 @@ class DQN_Parameter:
         self.device = device
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
+        self.capacity = capacity
 
     def get_state_dim(self):
         return self.state_dim
@@ -86,6 +109,8 @@ class DQN_Parameter:
     def get_epsilon_min(self):
         return self.epsilon_min
 
+    def get_capacity(self):
+        return self.capacity
 class State:
     def __init__(self):
         self.power = None
@@ -107,7 +132,7 @@ class State:
         area_point = np.concatenate([left_up_point, right_up_point,right_down_point,left_down_point])#归一化处理
         auv_point = np.array(self.auv_point)/self.max_point
         target_point = np.array(self.target_point)/self.max_point
-        features = np.concatenate([[self.power/self.max_power, self.time/self.max_time],area_point, auv_point, target_point])
+        features = np.concatenate([[self.power/self.max_power],area_point, auv_point, target_point])
         return features
 
     def next_state(self):
