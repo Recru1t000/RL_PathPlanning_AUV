@@ -78,12 +78,14 @@ class Qnet(torch.nn.Module):
         super(Qnet, self).__init__()
         self.fc1 = torch.nn.Linear(state_dim, hidden_dim)#建立输入层和隐藏层神经网络，state_dim定义为state的维度，hidden_dim自己定义为64
         self.fc2 = torch.nn.Linear(hidden_dim, hidden_dim)
-        self.fc3 = torch.nn.Linear(hidden_dim, action_dim)#建议输出层神经网络，action_dim定义为action的维度
+        self.fc3 = torch.nn.Linear(hidden_dim, hidden_dim)
+        self.fc4 = torch.nn.Linear(hidden_dim, action_dim)#建议输出层神经网络，action_dim定义为action的维度
 
     def forward(self, x):
         x = F.relu(self.fc1(x))  # 隐藏层使用ReLU激活函数
         x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = F.relu(self.fc3(x))
+        x = self.fc4(x)
         return x
 
 class DuelingQnet(torch.nn.Module):
@@ -201,7 +203,7 @@ class DQN:
         q_targets = rewards + self.gamma * max_next_q_values * (1 - dones)
 
         td_errors = q_targets - chosen_q_values
-        prios = np.abs(td_errors.detach().cpu().numpy()) + 1e-6
+        prios = np.abs(td_errors.detach().cpu().numpy()) + 1e-6#todo 改成gpu
         self.buffer.update_priorities(indices, prios)
 
         loss = (weights * F.mse_loss(chosen_q_values, q_targets, reduction='none')).mean()
@@ -210,14 +212,17 @@ class DQN:
         loss.backward()
         self.optimizer.step()
 
-        if self.count % self.target_update == 0:
-            self.target_q_net.load_state_dict(self.q_net.state_dict())
-        self.count += 1
+        #if self.count % self.target_update == 0:
+            #self.target_q_net.load_state_dict(self.q_net.state_dict())
+        #self.count += 1
+
+        self.soft_update(self.target_q_net, self.q_net)
     def save(self, filepath):
         torch.save({
             'q_net': self.q_net.state_dict(),
             'target_q_net': self.target_q_net.state_dict(),
-            'optimizer': self.optimizer.state_dict()
+            'optimizer': self.optimizer.state_dict(),
+            'epsilon': self.epsilon,
         }, filepath)
         print(f"模型参数已保存到 {filepath}")
 
@@ -226,6 +231,7 @@ class DQN:
         self.q_net.load_state_dict(checkpoint['q_net'])
         self.target_q_net.load_state_dict(checkpoint['target_q_net'])
         self.optimizer.load_state_dict(checkpoint['optimizer'])
+        self.epsilon = checkpoint['epsilon']
         print(f"模型参数已从 {filepath} 加载")
 
     def set_epsilon(self,epsilon):
@@ -249,6 +255,9 @@ class DQN:
         action = weighted_q_values.argmax().item()
         return action
 
+    def soft_update(self, target, source, tau=0.01):
+        for target_param, source_param in zip(target.parameters(), source.parameters()):
+            target_param.data.copy_(target_param.data * (1.0 - tau) + source_param.data * tau)
 '''
 episodes_list = list(range(len(return_list)))
 plt.plot(episodes_list, return_list)

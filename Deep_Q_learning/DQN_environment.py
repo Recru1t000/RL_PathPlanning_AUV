@@ -117,7 +117,7 @@ class DQN_Environment():
             if self.state.get_auv_point()==(self.init_parameters.get_init_target_point()[0],self.init_parameters.get_init_target_point()[1]):
                 done = True
                 self.reward.move_to_end_point(self.state.get_power(),self.state.get_power()/self.state.get_max_power())
-                print("power:"+str(self.state.get_power()))
+                #print("power:"+str(self.state.get_power()))
                 #self.show_the_path()
             else:
                 done = False
@@ -132,7 +132,7 @@ class DQN_Environment():
         obstacles = Obstacles()  # 障碍应该按照左下，右下，右上，左上，左下的方式添加
         #obstacles.add_obstacles([[(10, 3), (10, 5), (12, 5), (12, 3), (10, 3)]])
         #obstacles.add_obstacles([[(31, 36), (41, 36), (41, 42), (31, 42), (31, 36)]])
-        obstacles.add_obstacles([[(11, 11), (12, 11), (12, 13), (11, 13), (11, 11)]])
+        obstacles.add_obstacles([[(1, 1), (2, 1), (2, 3), (1, 3), (1, 1)]])
         base_map1 = base_map(self.init_parameters.get_x_lim(), self.init_parameters.get_y_lim(), 10)
         base_map1.set_obstacles(obstacles.get_obstacles())
         base_map1.set_goal_point([self.init_parameters.get_init_target_point()])

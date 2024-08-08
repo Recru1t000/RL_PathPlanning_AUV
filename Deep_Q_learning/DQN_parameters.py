@@ -4,8 +4,8 @@ import numpy as np
 
 class Init_Parameters():
     def __init__(self):
-        self.init_start_point = [41,9]
-        self.init_target_point = [41,80]
+        self.init_start_point = [21,22]
+        self.init_target_point = [93,80]
         self.x_xlim = 100
         self.y_ylim = 100
         self.radius = 5
@@ -24,7 +24,7 @@ class Init_Parameters():
 
 
         self.print_range = 0
-        self.print_max_range = 10
+        self.print_max_range = 15
 
     def get_init_start_point(self):
         return self.init_start_point

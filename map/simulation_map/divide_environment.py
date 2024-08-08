@@ -145,6 +145,10 @@ class Areas():
         for area in self.area_list:
             area.print_points()
 
+    def get_all_areas(self):
+
+        return self.area_list
+
     def get_all_edges(self):
         edge_list = []
         for area in self.area_list:
