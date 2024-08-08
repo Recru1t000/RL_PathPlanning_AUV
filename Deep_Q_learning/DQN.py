@@ -203,7 +203,7 @@ class DQN:
         q_targets = rewards + self.gamma * max_next_q_values * (1 - dones)
 
         td_errors = q_targets - chosen_q_values
-        prios = np.abs(td_errors.detach().cpu().numpy()) + 1e-6#todo 改成gpu
+        prios = np.abs(td_errors.detach().to(self.device).numpy()) + 1e-6
         self.buffer.update_priorities(indices, prios)
 
         loss = (weights * F.mse_loss(chosen_q_values, q_targets, reduction='none')).mean()
