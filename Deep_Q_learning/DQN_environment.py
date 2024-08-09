@@ -34,6 +34,8 @@ class DQN_Environment():
         #action = 1
         #print(action)
         self.reward.reset_reward()
+        self.state.set_sensed_obstacle(0)
+
         #确定探索的方向和半径
         new_explorer = DQN_Explorer(self.graph.get_griding_range())
         areas = self.graph.get_areas()
@@ -42,32 +44,36 @@ class DQN_Environment():
         edge_list = self.choose_edge_change_action_to_single(action,area)
         explore_angles_and_radius,edge_list_radius_and_angle = self.get_explore_angles_and_radius(edge_list,new_explorer)
 
+
+        self.init_parameters.add_average_step_explore(len(explore_angles_and_radius))#添加探索方向数量
+        self.init_parameters.add_average_step_edge(len(edge_list_radius_and_angle))#添加探索边数量
+
         #执行能量消耗
         reduce_power = self.power_consumption.explorer_power_consumption(explore_angles_and_radius)
         edges_reduce_power = self.power_consumption.edge_explorer_power_consumption_full(edge_list_radius_and_angle)
         self.state.reduce_power(reduce_power)#能量消耗的reward
 
-        #执行探索时间消耗
-        reduce_time = self.time_consumption.get_explore_time()
-        self.state.reduce_time(reduce_time)
-
         #执行能量消耗，时间消耗，边探索的reward
         #self.reward.get_edge_reward(edge_list,reduce_power,self.state.get_auv_point(),self.state.get_target_point(),self.power_consumption.get_power_consumption_full_sensing())
         self.reward.new_get_edge_reward(edges_reduce_power,self.explored_ob,self.init_parameters.get_start_explored_power(),(1-self.state.get_power()/self.state.get_max_power()))
         self.reward.get_power_consumption_reward(reduce_power,self.state.get_power(),self.state.get_max_power())
-        self.reward.start_explored(self.init_parameters.get_start_explored_power())
+        #self.reward.start_explored(self.init_parameters.get_start_explored_power())
         #self.reward.get_time_consumption_reward(reduce_time)
 
         #执行探索
         explore_obstacle = False
-        if not self.explored_ob:
-            for key,value in explore_angles_and_radius.items():
-                old_explorer = explorer([new_explorer.old_explorer_to_new(key)], [value], self.state.get_auv_point())
-                if self.basemap.set_explorer(old_explorer):
-                    explore_obstacle = True
-        else:
-            self.explored_ob = False
-        #todo 如果没有探索到必要边怎么办
+        for key,value in explore_angles_and_radius.items():
+            old_explorer = explorer([new_explorer.old_explorer_to_new(key)], [value], self.state.get_auv_point())
+            if self.basemap.set_explorer(old_explorer):
+                explore_obstacle = True
+
+        if explore_obstacle:
+            re_explore = self.sensed_obstacles()
+            if re_explore:
+                self.state.set_sensed_obstacle(1)
+                self.reward.explore_obstacle_reward(self.init_parameters.get_start_explored_power()*len(edges_reduce_power))#如果探索到了障碍的话，此次的探索能量的reward的扣除会稍微减轻
+                #print("重新定位")
+                return self.state.next_state(), self.reward.get_reward(), False, False, False
         has_explored_high_edge = False
         for edge in edge_list:
             if edge.get_reward()==2:
@@ -75,25 +81,9 @@ class DQN_Environment():
                 has_explored_high_edge = True
         #可视化
         #self.show_the_path()
-        #如果探索到障碍,扣除reward
-        #todo 探测障碍逻辑有问题
-        if explore_obstacle and not self.explored_ob:
-            #重新规划路线
-            apf = Artificial_Potential_Field(self.basemap)
-            apf.set_explorer(explorer([1], [1], self.state.get_auv_point()))
-            path = apf.move_to_goal()
-            #重新赋予权重
-            path_points = FindIntersections().find_intersections(path, self.init_parameters.get_x_lim(),self.init_parameters.get_radius())#不需要插入第一个点，因为当前AUV必然在边上
-            path_points.append((self.init_parameters.get_init_target_point()[0],self.init_parameters.get_init_target_point()[1]))
-            self.graph.generate_edge_reward(path_points)
-            path_points.pop(0)
-            self.path_points = path_points
-            self.state.set_target_point(path_points[0])
-            self.explored_ob = True
-            #扣除reward
-            return self.state.next_state(),self.reward.get_reward(),False,False,False
+
         #如果没有探索到下一个点的边，扣除reward重新行动。
-        elif not has_explored_high_edge:
+        if not has_explored_high_edge:
             return self.state.next_state(), self.reward.get_reward(), False, False, False
         elif has_explored_high_edge:
             if len(self.path_points)!=0:
@@ -107,10 +97,7 @@ class DQN_Environment():
                 next_point = self.init_parameters.get_init_target_point()
 
             self.state.set_target_point(next_point)
-            #可视化
-            # 执行时间消耗
-            reduce_time = self.time_consumption.move_time_consumption(self.state.get_auv_point(),next_point)
-            self.state.reduce_time(reduce_time)
+
             #执行时间reward
             #self.reward.get_time_consumption_reward(reduce_time)
             #判断是否到达终点
@@ -130,9 +117,10 @@ class DQN_Environment():
 
     def reset(self):
         obstacles = Obstacles()  # 障碍应该按照左下，右下，右上，左上，左下的方式添加
-        #obstacles.add_obstacles([[(10, 3), (10, 5), (12, 5), (12, 3), (10, 3)]])
-        #obstacles.add_obstacles([[(31, 36), (41, 36), (41, 42), (31, 42), (31, 36)]])
-        obstacles.add_obstacles([[(1, 1), (2, 1), (2, 3), (1, 3), (1, 1)]])
+        obstacles.add_obstacles([[(42.6, 42.5), (47.4, 42.5), (47.4, 47.5), (42.6, 47.5), (42.6, 42.5)]])
+        obstacles.add_obstacles([[(22.6, 22.5), (27.4, 22.5), (27.4, 27.5), (22.6, 27.5), (22.6, 22.5)]])
+        obstacles.add_obstacles([[(82.6, 82.5), (87.4, 82.5), (87.4, 87.5), (82.6, 87.5), (82.6, 82.5)]])
+        obstacles.add_obstacles([[(57.6, 32.5), (62.4, 32.5), (62.4, 37.5), (57.6, 37.5), (57.6, 32.5)]])
         base_map1 = base_map(self.init_parameters.get_x_lim(), self.init_parameters.get_y_lim(), 10)
         base_map1.set_obstacles(obstacles.get_obstacles())
         base_map1.set_goal_point([self.init_parameters.get_init_target_point()])
@@ -154,6 +142,7 @@ class DQN_Environment():
         # 第二步，确定移动路径
         apf = Artificial_Potential_Field(self.basemap)
         apf.set_explorer(explorer([1], [1], self.init_parameters.get_init_start_point()))
+        apf.set_heng_or_shu(self.init_parameters.get_heng_or_shu())
         path = apf.move_to_goal()
         self.parameter_base_show.set_base_show_path_points(path)  # 将移动路径点传递到传递可视化
 
@@ -281,3 +270,33 @@ class DQN_Environment():
     def show_the_path(self):
         self.parameter_base_show.set_base_show_path_points(self.path_points)
         self.basemap.base_show(self.parameter_base_show)
+
+    def sensed_obstacles(self):
+        re_explore = True
+        # 重新规划路线
+        apf = Artificial_Potential_Field(self.basemap)
+        apf.set_explorer(explorer([1], [1], self.state.get_auv_point()))
+        apf.set_heng_or_shu(self.init_parameters.get_heng_or_shu())
+        path = apf.move_to_goal()
+        # 重新赋予权重
+        path_points = FindIntersections().find_intersections(path, self.init_parameters.get_x_lim(),self.init_parameters.get_radius())  # 不需要插入第一个点，因为当前AUV必然在边上
+        path_points.append((self.init_parameters.get_init_target_point()[0], self.init_parameters.get_init_target_point()[1]))
+        self.graph.generate_edge_reward(path_points)
+        path_points.pop(0)
+        self.path_points = path_points
+
+        if self.state.get_target_point()[0]==path_points[0][0]:
+            segment_a = self.state.get_target_point()[1] //5
+            segment_b = path_points[0][1] // 5
+            if segment_a==segment_b:
+                re_explore = False
+        elif self.state.get_target_point()[1]==path_points[0][1]:
+            segment_a = self.state.get_target_point()[0] //5
+            segment_b = path_points[0][0] // 5
+            if segment_a==segment_b:
+                re_explore = False
+        else:
+            re_explore = True
+        self.state.set_target_point(path_points[0])
+        # 扣除reward
+        return re_explore

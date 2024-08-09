@@ -33,7 +33,7 @@ def select_action(action_array):
 
 lr = 0.001
 num_episodes = 500
-state_dim = 13
+state_dim = 14
 hidden_dim = 64
 action_dim = 15
 gamma = 0.98
@@ -70,21 +70,10 @@ down_up = train_points.get_down_up()
 left_right = train_points.get_left_right()
 ld_ru = train_points.get_ld_ru()
 for i in range(24):
-    if i%3==0:#下-上
-        down_up_points = down_up.pop(0)
-        init_parameters.set_init_start_point(down_up_points[0])
-        init_parameters.set_init_target_point(down_up_points[1])
-        down_up.append(down_up_points)
-    elif i%3==1:#左-右
-        left_right_points = left_right.pop(0)
-        init_parameters.set_init_start_point(left_right_points[0])
-        init_parameters.set_init_target_point(left_right_points[1])
-        left_right.append(left_right_points)
-    else:
-        ld_ru_points = ld_ru.pop(0)
-        init_parameters.set_init_start_point(ld_ru_points[0])
-        init_parameters.set_init_target_point(ld_ru_points[1])
-        ld_ru.append(ld_ru_points)
+    ld_ru_points = ld_ru.pop(0)
+    init_parameters.set_init_start_point(ld_ru_points[0])
+    init_parameters.set_init_target_point(ld_ru_points[1])
+    ld_ru.append(ld_ru_points)
     with tqdm(total=int(num_episodes / 10), desc='I %d' % i) as pbar:
         for i_episode in range(int(num_episodes / 10)):
 
@@ -98,10 +87,7 @@ for i in range(24):
                 init_parameters.set_print_range(i)
 
                 action = agent.take_action(state,init_parameters)
-                '''
-                if i<2:
-                    action = 0
-                '''
+
                 next_state, reward,done,truncated, _ = env.step(action+1)
                 if isinstance(state, tuple):
                     state = state[0]

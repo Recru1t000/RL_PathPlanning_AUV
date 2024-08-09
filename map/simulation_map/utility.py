@@ -187,12 +187,12 @@ class Collision():
             if angel == 270:  # 如果为90则说明是向上找点，所以该点必然大于初始点，向下则说明，小于所以设定该参数判断
                 canshu = -1
             if (
-                    self.y1 - self.y_init <= self.r and canshu * self.y1 >= canshu * self.y_init and self.x1 <= self.x_init <= self.x2):
+                    abs(self.y1 - self.y_init) <= self.r and canshu * self.y1 >= canshu * self.y_init and self.x1 <= self.x_init <= self.x2):
                 self.collision_points.append((self.x_init, self.y1))
                 # self.obstacle.add_bottom_explored((self.x_init,self.y1))
                 self.bottom_points.append((self.x_init, self.y1))
             if (
-                    self.y2 - self.y_init <= self.r and canshu * self.y2 >= canshu * self.y_init and self.x1 <= self.x_init <= self.x2):
+                    abs(self.y2 - self.y_init) <= self.r and canshu * self.y2 >= canshu * self.y_init and self.x1 <= self.x_init <= self.x2):
                 self.collision_points.append((self.x_init, self.y2))
                 # self.obstacle.add_up_explored((self.x_init,self.y2))
                 self.up_points.append((self.x_init, self.y2))

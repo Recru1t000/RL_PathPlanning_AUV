@@ -19,6 +19,7 @@ class Graph():
         self.areas.generate_areas(self.x_xlim, self.y_ylim, self.griding_range)
 
     def generate_edge_reward(self,path_points):
+        self.areas.areas_reset()
         self.areas.generate_edge_reward(path_points,self.reward_function)
     def where_areas_AUV_in(self,AUV_point,next_point):
         AUV_area = self.areas.where_area_auv_in(AUV_point,next_point)
@@ -135,8 +136,8 @@ class Areas():
                     #高价值
                     reward_function.set_high_edge(present_point,point,edge)
                     #中价值
-                    #edge = present_area.which_middle_edge(point)
-                    #reward_function.set_middle_edge(present_point, point, edge)
+                    edge = present_area.which_middle_edge(point)
+                    reward_function.set_middle_edge(present_point, point, edge)
 
                     break
             present_point = point
@@ -161,7 +162,6 @@ class Areas():
     def areas_reset(self):
         for area in self.area_list:
             area.area_reset()
-        self.set_distance(self.x_xlim**2+self.y_ylim**2)
 
     def set_area_AUV_in(self,area_AUV_in):
         self.area_AUV_in = area_AUV_in
@@ -171,6 +171,8 @@ class Areas():
 
     def get_area_AUV_in(self):
         return self.area_AUV_in
+
+
 # 划分完环境后的区域
 class Area():
     def __init__(self):

@@ -53,30 +53,34 @@ class Obstacle():
 
     def get_left_explored_points(self):
         return self.left_explored_points
-
+    #todo 考虑合并线段的问题
     def add_bottom_explored(self, point):
+        point = self.unique_points(point)
         self.bottom_explored_points.append(point)
         for bottom_explored_point in self.bottom_explored_points:
             bottom_explored_point.sort(key=lambda x: x[0])
         self.bottom_explored_points.sort(key=lambda x: x[0])
 
     def add_right_explored(self, point):
+        point = self.unique_points(point)
         self.right_explored_points.append(point)
         for right_explored_point in self.right_explored_points:
-            right_explored_point.sort(key=lambda x: x[0])
-        self.right_explored_points.sort(key=lambda x: x[0])
+            right_explored_point.sort(key=lambda x: x[1])
+        self.right_explored_points.sort(key=lambda x: x[1])
 
     def add_up_explored(self, point):
+        point = self.unique_points(point)
         self.up_explored_points.append(point)
         for up_explored_point in self.up_explored_points:
             up_explored_point.sort(key=lambda x: x[0])
         self.up_explored_points.sort(key=lambda x: x[0])
 
     def add_left_explored(self, point):
+        point = self.unique_points(point)
         self.left_explored_points.append(point)
         for left_explored_point in self.left_explored_points:
-            left_explored_point.sort(key=lambda x: x[0])
-        self.left_explored_points.sort(key=lambda x: x[0])
+            left_explored_point.sort(key=lambda x: x[1])
+        self.left_explored_points.sort(key=lambda x: x[1])
 
     def arrange_every_side(self):
         # self.bottom_explored_points = list(set(self.bottom_explored_points))
@@ -109,3 +113,11 @@ class Obstacle():
         show_points = [self.bottom_explored_points, self.right_explored_points, self.up_explored_points,
                        self.left_explored_points]
         return show_points
+
+    def unique_points(self,point):
+        unique_points = []
+
+        for p in point:
+            if p not in unique_points:
+                unique_points.append(p)
+        return unique_points

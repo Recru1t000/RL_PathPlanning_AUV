@@ -4,8 +4,9 @@ import numpy as np
 
 class Init_Parameters():
     def __init__(self):
-        self.init_start_point = [21,22]
-        self.init_target_point = [93,80]
+        self.init_start_point = [44,23]
+        self.init_target_point = [44,80]
+        self.heng_or_shu = 2  # 1是heng，2是shu
         self.x_xlim = 100
         self.y_ylim = 100
         self.radius = 5
@@ -16,16 +17,39 @@ class Init_Parameters():
         #每次探索的时间
         self.explore_time = 1
         #每次启动探索器所需要消耗的固定能量
-        self.start_explored_power = 1
+        self.start_explored_power = 4/self.explore_radius
         #设置的最大能量为1.5倍的全探索的能量乘以一条或者一列的格子数
-        self.init_power = self.power_consumption_value*math.sqrt((self.init_start_point[0]-self.init_target_point[0])**2+(self.init_start_point[1]-self.init_target_point[1])**2)/self.explore_radius*0.5+math.sqrt((self.init_start_point[0]-self.init_target_point[0])**2+(self.init_start_point[1]-self.init_target_point[1])**2)/self.radius*self.start_explored_power
+        self.init_power = self.power_consumption_value*math.sqrt((self.init_start_point[0]-self.init_target_point[0])**2+(self.init_start_point[1]-self.init_target_point[1])**2)/self.explore_radius*0.5
         #设置初始时间为1.5倍的移动时间乘以起点到终点的距离
         self.init_time = 1.5*self.move_time*math.sqrt((self.init_start_point[0]-self.init_target_point[0])**2+(self.init_start_point[1]-self.init_target_point[1])**2)
 
-
         self.print_range = 0
-        self.print_max_range = 15
+        self.print_max_range = 400
 
+        self.average_step_explore = 0
+        self.average_step_edge = 0
+
+    def add_average_step_edge(self,average_step_edge):
+        self.average_step_edge += average_step_edge
+
+    def get_average_step_edge(self,step):
+        return self.average_step_edge/step
+
+    def reset_average_step_edge(self):
+        self.average_step_edge = 0
+
+    def add_average_step_explore(self,average_step_explore):
+        self.average_step_explore += average_step_explore
+
+    def get_average_step_explore(self,step):
+        return self.average_step_explore/step
+
+    def reset_average_step_explore(self):
+        self.average_step_explore = 0
+    def set_heng_or_shu(self,heng_or_shu):
+        self.heng_or_shu = heng_or_shu
+    def get_heng_or_shu(self):
+        return self.heng_or_shu
     def get_init_start_point(self):
         return self.init_start_point
     def get_init_target_point(self):
@@ -64,6 +88,9 @@ class Init_Parameters():
 
     def set_init_target_point(self,init_target_point):
         self.init_target_point = init_target_point
+
+    def set_init_power(self,init_power):
+        self.init_power = init_power
 class DQN_Parameter:
     def __init__(self,state_dim, hidden_dim, action_dim, learning_rate, gamma,
                  epsilon, target_update, device,epsilon_min,epsilon_decay,capacity):
@@ -123,6 +150,7 @@ class State:
         self.max_power = None
         self.max_time = None
         self.max_point = None
+        self.sensed_obstacle = 0
 
     def turn_to_features(self):
         left_up_point = np.array(self.area.get_left_up_point())/self.max_point
@@ -132,7 +160,7 @@ class State:
         area_point = np.concatenate([left_up_point, right_up_point,right_down_point,left_down_point])#归一化处理
         auv_point = np.array(self.auv_point)/self.max_point
         target_point = np.array(self.target_point)/self.max_point
-        features = np.concatenate([[self.power/self.max_power],area_point, auv_point, target_point])
+        features = np.concatenate([[self.power/self.max_power,self.sensed_obstacle/1],area_point, auv_point, target_point])
         return features
 
     def next_state(self):
@@ -141,6 +169,9 @@ class State:
 
     def reduce_power(self,value):
         self.power = self.power - value
+
+    def add_power(self,value):
+        self.power = self.power + value
 
     def reduce_time(self,reduce_time):
         self.time = self.time - reduce_time
@@ -168,6 +199,9 @@ class State:
     def set_max_point(self, max_point):
         self.max_point = max_point
 
+    def set_sensed_obstacle(self,sensed_obstacle):
+        self.sensed_obstacle = sensed_obstacle
+
     def get_power(self):
         return self.power
 
@@ -191,3 +225,6 @@ class State:
 
     def get_max_point(self):
         return self.max_point
+
+    def get_sensed_obstacle(self):
+        return self.sensed_obstacle

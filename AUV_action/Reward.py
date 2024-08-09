@@ -14,7 +14,8 @@ class Reward():
 
     def set_middle_edge(self,first_point,second_point,edge):
         middle_edge_reward = 1
-        edge.set_reward(middle_edge_reward)
+        if edge.get_reward()==0:
+            edge.set_reward(middle_edge_reward)
 
     def get_edge_reward(self,edge_list,reduce_power,first_point,second_point,power_consumption_full_sensing):
         distance = sqrt((first_point[0]-second_point[0])**2 + (first_point[1]-second_point[1])**2)
@@ -35,13 +36,12 @@ class Reward():
             if edge_reduce_power[0].get_reward()==0:#low-value
                 self.reward = self.reward-edge_reduce_power[1]*(len(edges_reduce_power))
             elif edge_reduce_power[0].get_reward()==1:#middle-value
-                if explored_ob:#如果有障碍则进一步削弱减成
-                    self.reward = re_explore_power-power_rate*edge_reduce_power[2]/2
+                if re_explore_power - edge_reduce_power[1]<0:
+                    self.reward = self.reward - edge_reduce_power[1] * (len(edges_reduce_power))
                 else:
-                    self.reward = re_explore_power - power_rate * edge_reduce_power[2]
+                    self.reward = self.reward  - edge_reduce_power[1]
             elif edge_reduce_power[0].get_reward()==2:#high-value
                 self.reward = self.reward+(edge_reduce_power[2]-edge_reduce_power[1])*(5-len(edges_reduce_power))
-                #print((edge_reduce_power[2]-edge_reduce_power[1])*(5-len(edges_reduce_power)))
             else:
                 print("line reward 设置错误"+"point0x:"+str(edge_reduce_power[0].get_point_0_x())+"point0y:"+str(edge_reduce_power[0].get_point_0_y())+"point1x:"+str(edge_reduce_power[0].get_point_1_x())+"point1y:"+str(edge_reduce_power[0].get_point_1_y()))
         #print(self.reward)
@@ -87,3 +87,6 @@ class Reward():
 
     def reset_reward(self):
         self.reward = 0
+
+    def explore_obstacle_reward(self,re_explore_power):
+        self.reward = self.reward+re_explore_power
